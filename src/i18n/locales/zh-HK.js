@@ -94,7 +94,7 @@ export default {
     },
     hero: {
       title: '易發粵港車',
-      subtitle: '為您提供全方位的汽車服務，從購買到維護，一站式解決方案',
+      subtitle: '為您提供全方位的粵港車及中港兩地牌服務',
       getStarted: '立即開始',
       learnMore: '了解更多',
       sellCar: '寄售車輛',

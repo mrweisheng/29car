@@ -94,7 +94,7 @@ export default {
     },
     hero: {
       title: '易发粤港车',
-      subtitle: '为您提供全方位的汽车服务，从购买到维护，一站式解决方案',
+      subtitle: '为您提供全方位的粤港车及中港两地牌服务',
       getStarted: '立即开始',
       learnMore: '了解更多',
       sellCar: '寄售车辆',

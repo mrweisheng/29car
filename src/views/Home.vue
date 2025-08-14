@@ -864,6 +864,24 @@ onActivated(() => {
 @include mobile {
   .hero {
     padding: $spacing-lg 0;
+    // 移动端添加背景图片
+    background-image: linear-gradient(135deg, rgba(25, 118, 210, 0.85) 0%, rgba(25, 118, 210, 0.9) 100%), url('/car.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    
+    // 添加遮罩层确保文字可读性
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.2) 100%);
+      z-index: 1;
+    }
 
     .container {
       grid-template-columns: 1fr;
@@ -871,15 +889,25 @@ onActivated(() => {
       gap: $spacing-lg;
       padding-left: $spacing-md;
       padding-right: $spacing-md;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-content {
+      // 确保内容在遮罩层之上
+      position: relative;
+      z-index: 3;
     }
 
     .hero-title {
       font-size: 28px;
       line-height: 1.3;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .hero-subtitle {
       font-size: $font-size-medium;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     .hero-stats {
@@ -890,64 +918,67 @@ onActivated(() => {
       .stat-item {
         .stat-number {
           font-size: 20px;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .stat-label {
           font-size: $font-size-extra-small;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
       }
     }
 
-                   .hero-actions {
-        justify-content: center;
-        flex-wrap: nowrap;
-        gap: $spacing-sm;
+    .hero-actions {
+      justify-content: center;
+      flex-wrap: nowrap;
+      gap: $spacing-sm;
+      
+      .el-button {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      .sell-car-btn {
+        background: #ffffff;
+        color: $primary-color;
+        border: 2px solid #ffffff;
+        font-weight: 600;
         
-        .el-button {
-          flex: 1;
-          min-width: 0;
-          white-space: nowrap;
+        &:hover {
+          background: rgba(255, 255, 255, 0.9);
+          border-color: rgba(255, 255, 255, 0.9);
+          color: color-mix(in srgb, $primary-color 85%, black);
         }
         
-        .sell-car-btn {
-          background: #ffffff;
+        .el-icon {
           color: $primary-color;
-          border: 2px solid #ffffff;
-          font-weight: 600;
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: rgba(255, 255, 255, 0.9);
-            color: color-mix(in srgb, $primary-color 85%, black);
-          }
-          
-          .el-icon {
-            color: $primary-color;
-          }
+        }
+      }
+      
+      .browse-cars-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        border: 2px solid #ffffff;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: #ffffff;
+          color: #ffffff;
         }
         
-        .browse-cars-btn {
-          background: transparent;
+        .el-icon {
           color: #ffffff;
-          border: 2px solid #ffffff;
-          font-weight: 600;
-          
-          &:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #ffffff;
-            color: #ffffff;
-          }
-          
-          .el-icon {
-            color: #ffffff;
-          }
         }
       }
+    }
 
+    // 移动端隐藏hero-image
     .hero-image {
-      img {
-        height: 250px;
-      }
+      display: none;
     }
   }
 
