@@ -50,6 +50,14 @@ const routes = [
     meta: {
       title: 'vehicleDetail.title'
     }
+  },
+  {
+    path: '/special-offer',
+    name: 'SpecialOffer',
+    component: () => import('@/views/SpecialOffer.vue'),
+    meta: {
+      title: 'specialOffer.title'
+    }
   }
 ]
 
@@ -86,10 +94,11 @@ router.beforeEach((to, from, next) => {
       'nav.search': '搜索結果',
       'auth.title': '登錄註冊',
       'publish.title': '發佈車輛',
-      'vehicleDetail.title': '車輛詳情'
+      'vehicleDetail.title': '車輛詳情',
+      'specialOffer.title': '特價車+牌組合'
     }
     const title = titleMap[to.meta.title] || to.meta.title
-    document.title = `${title} - 易发粤港车`
+          document.title = `${title} - 明哥粤港车`
   }
   
 

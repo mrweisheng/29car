@@ -1,6 +1,14 @@
 <template>
   <div class="home">
     <AppHeader />
+    
+    <!-- 全局加载指示器 -->
+    <div v-if="loadingLatest || loadingFeatured || loadingSpecialOffer" class="global-loading-overlay">
+      <div class="loading-spinner">
+        <el-icon class="spinner-icon"><Loading /></el-icon>
+        <p class="loading-text">正在加载车辆数据...</p>
+      </div>
+    </div>
 
     <!-- 主要內容區域 -->
     <main class="main-content">
@@ -16,17 +24,20 @@
             </p>
             <div class="hero-stats">
               <div class="stat-item">
-                <span class="stat-number">97,131</span>
-                <span class="stat-label">{{ $t('home.hero.stats.vehicles') }}</span>
+                <span class="stat-number">42</span>
+                <span class="stat-label">{{ $t('home.hero.stats.years') }}</span>
               </div>
               <div class="stat-item">
-                <span class="stat-number">15,420</span>
-                <span class="stat-label">{{ $t('home.hero.stats.users') }}</span>
+                <span class="stat-number">100,000+</span>
+                <span class="stat-label">{{ $t('home.hero.stats.customers') }}</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-number">8,756</span>
-                <span class="stat-label">{{ $t('home.hero.stats.deals') }}</span>
-              </div>
+            </div>
+            <!-- 移动端电话联系信息 -->
+            <div class="hero-contact">
+              <a href="javascript:void(0)" class="contact-link" @click="handleCopyPhone">
+                <el-icon><Phone /></el-icon>
+                <span>98702065</span>
+              </a>
             </div>
                          <div class="hero-actions">
                <el-button class="sell-car-btn" size="large" @click="handleSellCar">
@@ -48,20 +59,24 @@
       <!-- 分类卡片区域 -->
       <div class="category-cards">
         <div
-          v-for="cat in categories"
+          v-for="cat in currentCategories"
           :key="cat.value"
           class="category-card"
           @click="goToCategory(cat.value)"
         >
           <div class="category-card-inner">
             <div class="category-icon-wrapper">
-              <el-icon class="category-icon">
+              <div v-if="cat.customIcon" class="custom-icon">
+                <img v-if="cat.icon === 'search-cars'" src="@/assets/search-cars-icon.svg" alt="找车" class="category-svg-icon" />
+                <img v-else-if="cat.icon === 'cross-border'" src="@/assets/cross-border-icon.svg" alt="中港牌" class="category-svg-icon" />
+              </div>
+              <el-icon v-else class="category-icon">
                 <component :is="cat.icon" />
               </el-icon>
             </div>
             <div class="category-content">
               <h3 class="category-title">{{ cat.label }}</h3>
-              <p class="category-description">{{ cat.description }}</p>
+              <p v-if="cat.description" class="category-description">{{ cat.description }}</p>
             </div>
           </div>
         </div>
@@ -99,30 +114,40 @@
                   @load="handleImageLoad"
                   loading="lazy"
                 />
-                <div class="car-badge" v-if="car.vehicle_status === 1">精選</div>
+                <div v-if="car.is_special_offer === 1" class="car-badge special-offer">
+                  <el-icon><Star /></el-icon>
+                </div>
+                <div v-else-if="car.vehicle_status === 1" class="car-badge">精選</div>
               </div>
               <div class="car-info">
                 <h3 class="car-name">{{ car.car_brand }} {{ car.car_model }}</h3>
                 <p class="car-details">{{ car.year }} | {{ car.fuel_type }} | {{ formatSeats(car.seats) }}</p>
-                <div class="car-price">
-                  <template v-if="getFormattedPrice(car) === '价格面议'">
-                    <span class="price">价格面议</span>
+                <div class="car-price" :class="{ 'special-offer-price': car.is_special_offer === 1 }">
+                  <template v-if="car.is_special_offer === 1">
+                    <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
                   </template>
                   <template v-else>
-                    <div class="price-container">
-                      <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
-                      <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
-                        {{ getFormattedPrice(car).originalPrice }}
-                      </span>
-                      <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
-                        -{{ getFormattedPrice(car).discountPercent }}%
-                      </span>
-                    </div>
+                    <template v-if="getFormattedPrice(car) === '价格面议'">
+                      <span class="price">价格面议</span>
+                    </template>
+                    <template v-else>
+                      <div class="price-container">
+                        <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
+                          {{ getFormattedPrice(car).originalPrice }}
+                        </span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
+                          -{{ getFormattedPrice(car).discountPercent }}%
+                        </span>
+                      </div>
+                    </template>
                   </template>
                 </div>
                 <div class="car-contact">
                   <el-icon><Phone /></el-icon>
-                  <span>明哥 98702065</span>
+                  <span v-if="car.is_special_offer === 1">明哥 98702065</span>
+                  <span v-else-if="isMinggeUser">{{ car.contact_name || '明哥' }} {{ car.phone_number || '98702065' }}</span>
+                  <span v-else>明哥 98702065</span>
                 </div>
                 <!-- 额外信息 -->
                 <div class="car-extra" v-if="car.transmission || car.engine_volume">
@@ -135,6 +160,88 @@
             <!-- 无数据时显示 -->
             <div v-else class="no-featured-cars">
               <el-empty description="暂无精选车辆" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 特价车辆专区 -->
+      <section class="special-offer-cars">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">{{ $t('home.specialOffer.title') }}</h2>
+            <el-button link @click="handleViewAll">
+              {{ $t('home.specialOffer.viewAll') }}
+              <el-icon><ArrowRight /></el-icon>
+            </el-button>
+          </div>
+          <div class="cars-grid">
+            <!-- 加载状态 -->
+            <div v-if="loadingSpecialOffer" class="loading-cars">
+              <el-skeleton :rows="3" animated v-for="i in 4" :key="i" />
+            </div>
+            
+            <!-- 车辆卡片 -->
+            <div 
+              v-else-if="specialOfferCars.length > 0"
+              class="car-card" 
+              v-for="car in specialOfferCars" 
+              :key="car.id" 
+              @click="handleCarClick(car)"
+            >
+              <div class="car-image">
+                <img 
+                  :src="car.images && car.images.length > 0 ? car.images[0].image_url : '/default-car.jpg'" 
+                  :alt="`${car.car_brand} ${car.car_model}`" 
+                  @error="handleImageError"
+                  @load="handleImageLoad"
+                  loading="lazy"
+                />
+                <div v-if="car.is_special_offer === 1" class="car-badge special-offer">
+                  <el-icon><Star /></el-icon>
+                </div>
+              </div>
+              <div class="car-info">
+                <h3 class="car-name">{{ car.car_brand }} {{ car.car_model }}</h3>
+                <p class="car-details">{{ car.year }} | {{ car.fuel_type }} | {{ formatSeats(car.seats) }}</p>
+                <div class="car-price" :class="{ 'special-offer-price': car.is_special_offer === 1 }">
+                  <template v-if="car.is_special_offer === 1">
+                    <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
+                  </template>
+                  <template v-else>
+                    <template v-if="getFormattedPrice(car) === '价格面议'">
+                      <span class="price">价格面议</span>
+                    </template>
+                    <template v-else>
+                      <div class="price-container">
+                        <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
+                          {{ getFormattedPrice(car).originalPrice }}
+                        </span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
+                          -{{ getFormattedPrice(car).discountPercent }}%
+                        </span>
+                      </div>
+                    </template>
+                  </template>
+                </div>
+                <div class="car-contact">
+                  <el-icon><Phone /></el-icon>
+                  <span v-if="car.is_special_offer === 1">明哥 98702065</span>
+                  <span v-else-if="isMinggeUser">{{ car.contact_name || '明哥' }} {{ car.phone_number || '98702065' }}</span>
+                  <span v-else>明哥 98702065</span>
+                </div>
+                <!-- 额外信息 -->
+                <div class="car-extra" v-if="car.transmission || car.engine_volume">
+                  <span v-if="car.transmission" class="extra-item">{{ car.transmission }}</span>
+                  <span v-if="car.engine_volume" class="extra-item">{{ car.engine_volume }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 无数据时显示 -->
+            <div v-else class="no-special-offer-cars">
+              <el-empty description="暂无特价车辆" />
             </div>
           </div>
         </div>
@@ -153,7 +260,15 @@
           <div class="cars-grid">
             <!-- 加载状态 -->
             <div v-if="loadingLatest" class="loading-cars">
-              <el-skeleton :rows="3" animated v-for="i in 4" :key="i" />
+              <div v-for="i in 4" :key="i" class="loading-card">
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px;" />
+                <div class="loading-card-content">
+                  <el-skeleton-item variant="h3" style="width: 80%; height: 20px; margin-top: 12px;" />
+                  <el-skeleton-item variant="text" style="width: 60%; height: 14px; margin-top: 8px;" />
+                  <el-skeleton-item variant="text" style="width: 40%; height: 16px; margin-top: 8px;" />
+                  <el-skeleton-item variant="text" style="width: 70%; height: 14px; margin-top: 8px;" />
+                </div>
+              </div>
             </div>
             
             <!-- 车辆卡片 -->
@@ -172,30 +287,40 @@
                   @load="handleImageLoad"
                   loading="lazy"
                 />
-                <div class="car-badge new">{{ $t('home.car.new') }}</div>
+                <div v-if="car.is_special_offer === 1" class="car-badge special-offer">
+                  <el-icon><Star /></el-icon>
+                </div>
+                <div v-else class="car-badge new">{{ $t('home.car.new') }}</div>
               </div>
               <div class="car-info">
                 <h3 class="car-name">{{ car.car_brand }} {{ car.car_model }}</h3>
                 <p class="car-details">{{ car.year }} | {{ car.fuel_type }} | {{ formatSeats(car.seats) }}</p>
-                <div class="car-price">
-                  <template v-if="getFormattedPrice(car) === '价格面议'">
-                    <span class="price">价格面议</span>
+                <div class="car-price" :class="{ 'special-offer-price': car.is_special_offer === 1 }">
+                  <template v-if="car.is_special_offer === 1">
+                    <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
                   </template>
                   <template v-else>
-                    <div class="price-container">
-                      <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
-                      <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
-                        {{ getFormattedPrice(car).originalPrice }}
-                      </span>
-                      <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
-                        -{{ getFormattedPrice(car).discountPercent }}%
-                      </span>
-                    </div>
+                    <template v-if="getFormattedPrice(car) === '价格面议'">
+                      <span class="price">价格面议</span>
+                    </template>
+                    <template v-else>
+                      <div class="price-container">
+                        <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
+                          {{ getFormattedPrice(car).originalPrice }}
+                        </span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
+                          -{{ getFormattedPrice(car).discountPercent }}%
+                        </span>
+                      </div>
+                    </template>
                   </template>
                 </div>
                 <div class="car-contact">
                   <el-icon><Phone /></el-icon>
-                  <span>明哥 98702065</span>
+                  <span v-if="car.is_special_offer === 1">明哥 98702065</span>
+                  <span v-else-if="isMinggeUser">{{ car.contact_name || '明哥' }} {{ car.phone_number || '98702065' }}</span>
+                  <span v-else>明哥 98702065</span>
                 </div>
                 <!-- 额外信息 -->
                 <div class="car-extra" v-if="car.transmission || car.engine_volume">
@@ -267,20 +392,29 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onActivated } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { ref, computed, onMounted, onActivated, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { Van, Box, Bicycle, Star, Search, Phone, Lock, Setting, User, Wallet, ChatDotRound, Message, Close, Calendar, Tickets, Cpu, Plus, ArrowRight } from '@element-plus/icons-vue'
+import { Van, Box, Bicycle, Star, Search, Phone, Lock, Setting, User, Wallet, ChatDotRound, Message, Close, Calendar, Tickets, Cpu, Plus, ArrowRight, Loading, Document } from '@element-plus/icons-vue'
 import { vehicleAPI } from '@/utils/api'
 import VehicleDetailDrawer from '@/components/VehicleDetailDrawer.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const userStore = useUserStore()
+
+// 判断是否为指定用户（mingge）
+const isMinggeUser = computed(() => {
+  // 确保用户状态已完全初始化
+  if (!userStore.isInitialized || userStore.isInitializing) {
+    return false
+  }
+  return userStore.isLoggedIn && userStore.userInfo?.username === 'mingge'
+})
 
 // 注册组件
 const components = {
@@ -295,7 +429,7 @@ const searchKeyword = ref('')
 // 事件處理
 
 const handleSellCar = () => {
-  ElMessage.success(t('messages.sellCarFeature'))
+  router.push({ path: '/publish' })
 }
 
 const handleBrowseCars = () => {
@@ -306,9 +440,33 @@ const handleSearch = () => {
   ElMessage.success(t('messages.searchFeature'))
 }
 
+// 复制号码（替代 tel: 跳转）
+const handleCopyPhone = async () => {
+  try {
+    const phone = '98702065'
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(phone)
+    } else {
+      const input = document.createElement('input')
+      input.value = phone
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    ElMessage.success('手机号已复制')
+  } catch (e) {
+    ElMessage.error('复制失败，请手动复制：98702065')
+  }
+}
+
 // 精選車輛數據
 const featuredCars = ref([])
 const loadingFeatured = ref(false)
+
+// 特价车辆数据
+const specialOfferCars = ref([])
+const loadingSpecialOffer = ref(false)
 
 // 最新上架車輛數據
 const latestCars = ref([])
@@ -348,6 +506,14 @@ const handleViewAll = () => {
 
 // 格式化价格显示
 const formatPrice = (currentPrice, originalPrice) => {
+  // 如果已经是格式化的字符串，直接返回
+  if (typeof currentPrice === 'string' && currentPrice.includes('HKD$98,000（包含车+两地牌）')) {
+    return {
+      currentPrice: currentPrice,
+      hasDiscount: false
+    }
+  }
+  
   if (!currentPrice || currentPrice === '0.00') return '价格面议'
   
   // 默认显示现价
@@ -372,6 +538,20 @@ const formatPrice = (currentPrice, originalPrice) => {
 
 // 获取格式化的价格信息
 const getFormattedPrice = (car) => {
+  // 特价车辆的价格显示逻辑
+  if (car.is_special_offer === 1) {
+    // 明哥用户看到真实价格
+    if (isMinggeUser.value) {
+      return formatPrice(car.current_price, car.original_price)
+    }
+    // 非明哥用户看到固定特价信息
+    return {
+      currentPrice: 'HKD$98,000（包含车+两地牌）',
+      hasDiscount: false
+    }
+  }
+  
+  // 非特价车辆的正常价格显示
   return formatPrice(car.current_price, car.original_price)
 }
 
@@ -425,6 +605,21 @@ const fetchFeaturedCars = async () => {
   }
 }
 
+// 获取特价车辆数据
+const fetchSpecialOfferCars = async () => {
+  loadingSpecialOffer.value = true
+  try {
+    const response = await vehicleAPI.getSpecialOfferVehicles()
+    specialOfferCars.value = response.vehicles || []
+    console.log('🎯 特价车辆获取成功:', specialOfferCars.value)
+  } catch (error) {
+    console.error('获取特价车辆失败:', error)
+    ElMessage.error('获取特价车辆失败，请稍后重试')
+  } finally {
+    loadingSpecialOffer.value = false
+  }
+}
+
 // 获取最新上架车辆数据
 const fetchLatestCars = async () => {
   loadingLatest.value = true
@@ -442,6 +637,16 @@ const fetchLatestCars = async () => {
 
 // 移动端检测
 const isMobile = ref(window.innerWidth <= 768)
+
+// 监听窗口大小变化
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 根据设备类型选择分类数据
+const currentCategories = computed(() => {
+  return isMobile.value ? mobileCategories.value : categories.value
+})
 
 // 详情抽屉相关状态
 const detailDrawerVisible = ref(false)
@@ -476,6 +681,15 @@ const openDetailDrawer = async (vehicleId) => {
     
     // 数据格式转换，适配VehicleDetailDrawer组件
     if (rawData) {
+      // 根据用户权限和车辆类型过滤价格信息
+      const isSpecialOffer = rawData.is_special_offer === 1
+      console.log('🔍 特价车辆检查:', {
+        vehicleId: rawData.vehicle_id,
+        isSpecialOffer,
+        isMinggeUser: isMinggeUser.value,
+        is_special_offer: rawData.is_special_offer
+      })
+      
       const transformedData = {
         id: rawData.id,
         vehicle_id: rawData.vehicle_id,
@@ -486,9 +700,14 @@ const openDetailDrawer = async (vehicleId) => {
         seats: rawData.seats,
         year: rawData.year,
         description: rawData.description,
-        current_price: rawData.current_price,
-        original_price: rawData.original_price,
-        contact_phone: rawData.phone_number || rawData.contact_phone,
+        is_special_offer: rawData.is_special_offer, // 添加特价标识字段
+        // 根据用户权限和特价标识过滤价格信息
+        current_price: isMinggeUser.value ? rawData.current_price : (isSpecialOffer ? 'HKD$98,000（包含车+两地牌）' : rawData.current_price),
+        original_price: isMinggeUser.value ? rawData.original_price : (isSpecialOffer ? null : rawData.original_price),
+        // 根据用户权限过滤联系信息
+        contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
+        phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
+        contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
         images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
       }
       console.log('🎯 Home页面 - 转换后的数据:', transformedData)
@@ -559,9 +778,44 @@ const categories = computed(() => [
   }
 ])
 
+// 移动端分类数据
+const mobileCategories = computed(() => [
+  { 
+    label: t('home.mobileCategory.searchCars.title'), 
+    value: 'search-cars', 
+    icon: 'search-cars',
+    customIcon: true
+  },
+  { 
+    label: t('home.mobileCategory.crossBorder.title'), 
+    value: 'cross-border', 
+    icon: 'cross-border',
+    customIcon: true
+  },
+  { 
+    label: t('home.mobileCategory.specialOffer.title'), 
+    value: 'special-offer', 
+    icon: 'Star',
+    customIcon: false
+  },
+  { 
+    label: t('home.mobileCategory.vehicleRegistration.title'), 
+    value: 'vehicle-registration', 
+    icon: 'Document',
+    customIcon: false
+  }
+])
+
 function goToCategory(category) {
-  if (category === 'search-more') {
+  if (category === 'search-more' || category === 'search-cars') {
     router.push({ path: '/search' })
+  } else if (category === 'cross-border') {
+    router.push({ path: '/about' })
+  } else if (category === 'special-offer') {
+    // 移动端特价车+牌组合跳转到专门页面
+    router.push({ path: '/special-offer' })
+  } else if (category === 'vehicle-registration') {
+    router.push({ path: '/publish' })
   } else {
     router.push({ path: '/search', query: { category } })
   }
@@ -586,11 +840,21 @@ const scrollToTop = () => {
 onMounted(() => {
   scrollToTop()
   fetchFeaturedCars()
+  fetchSpecialOfferCars()
   fetchLatestCars()
+  
+  // 添加窗口大小监听器
+  window.addEventListener('resize', updateIsMobile)
+  updateIsMobile() // 初始化检测
 })
 
 onActivated(() => {
   scrollToTop()
+})
+
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', updateIsMobile)
 })
 </script>
 
@@ -650,7 +914,8 @@ onActivated(() => {
 
     .hero-subtitle {
       font-size: $font-size-large;
-      margin-bottom: $spacing-lg;
+      // margin-bottom: $spacing-lg;
+      margin-bottom: 12px;
       opacity: 0.9;
     }
 
@@ -723,13 +988,18 @@ onActivated(() => {
       border-radius: $border-radius-large;
     }
   }
+
+  // PC端隐藏电话联系信息
+  .hero-contact {
+    display: none;
+  }
 }
 
 .category-cards {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: $spacing-sm;
-  margin: $spacing-xxl 0;
+  margin: $spacing-lg 0;
   padding: 0 $spacing-md;
 }
 
@@ -805,6 +1075,20 @@ onActivated(() => {
   transition: all 0.3s ease;
 }
 
+.custom-icon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-svg-icon {
+  width: 48px;
+  height: 48px;
+  transition: all 0.3s ease;
+}
+
 .category-content {
   .category-title {
     font-size: 1.125rem;
@@ -863,7 +1147,7 @@ onActivated(() => {
 // 響應式設計
 @include mobile {
   .hero {
-    padding: $spacing-lg 0;
+    padding: $spacing-md 0;
     // 移动端添加背景图片
     background-image: linear-gradient(135deg, rgba(25, 118, 210, 0.85) 0%, rgba(25, 118, 210, 0.9) 100%), url('/car.jpg');
     background-size: cover;
@@ -886,7 +1170,7 @@ onActivated(() => {
     .container {
       grid-template-columns: 1fr;
       text-align: center;
-      gap: $spacing-lg;
+      gap: $spacing-md;
       padding-left: $spacing-md;
       padding-right: $spacing-md;
       position: relative;
@@ -912,8 +1196,9 @@ onActivated(() => {
 
     .hero-stats {
       justify-content: center;
-      gap: $spacing-md;
+      gap: $spacing-sm;
       flex-wrap: wrap;
+      margin-bottom: 0 !important; // 移动端强制去掉底部间距
 
       .stat-item {
         .stat-number {
@@ -929,49 +1214,42 @@ onActivated(() => {
     }
 
     .hero-actions {
+      display: none !important; // 移动端隐藏操作按钮
+    }
+
+    .hero-contact {
+      display: flex;
       justify-content: center;
-      flex-wrap: nowrap;
-      gap: $spacing-sm;
+      margin-top: $spacing-sm;
       
-      .el-button {
-        flex: 1;
-        min-width: 0;
-        white-space: nowrap;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      }
-      
-      .sell-car-btn {
-        background: #ffffff;
-        color: $primary-color;
-        border: 2px solid #ffffff;
+      .contact-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: white;
+        text-decoration: none;
+        font-size: $font-size-small;
         font-weight: 600;
-        
-        &:hover {
-          background: rgba(255, 255, 255, 0.9);
-          border-color: rgba(255, 255, 255, 0.9);
-          color: color-mix(in srgb, $primary-color 85%, black);
-        }
-        
-        .el-icon {
-          color: $primary-color;
-        }
-      }
-      
-      .browse-cars-btn {
-        background: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
-        border: 2px solid #ffffff;
-        font-weight: 600;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
         backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         
         &:hover {
-          background: rgba(255, 255, 255, 0.2);
-          border-color: #ffffff;
-          color: #ffffff;
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         .el-icon {
-          color: #ffffff;
+          font-size: 16px;
+        }
+        
+        span {
+          font-size: 14px;
         }
       }
     }
@@ -997,11 +1275,15 @@ onActivated(() => {
     gap: 8px;
   }
 
+  .category-cards {
+    margin: $spacing-md 0;
+  }
+
   .featured-cars,
+  .special-offer-cars,
   .latest-cars {
     .container {
-      padding-left: $spacing-md;
-      padding-right: $spacing-md;
+      padding: $spacing-md 10px !important;
     }
   }
 
@@ -1030,8 +1312,10 @@ onActivated(() => {
 }
 
 .featured-cars,
+.special-offer-cars,
 .latest-cars {
   background: #f8f9fa;
+  padding: $spacing-lg 0;
 
   .container {
     max-width: 1200px;
@@ -1056,6 +1340,7 @@ onActivated(() => {
   }
 
   .no-featured-cars,
+  .no-special-offer-cars,
   .no-latest-cars {
     grid-column: 1 / -1;
     text-align: center;
@@ -1100,6 +1385,22 @@ onActivated(() => {
 
       &.new {
         background: $success-color;
+      }
+      
+      &.special-offer {
+        background: #f56c6c;
+        color: white;
+        padding: 6px;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .el-icon {
+          font-size: 16px;
+        }
       }
     }
   }
@@ -1168,7 +1469,8 @@ onActivated(() => {
       }
     }
 
-    .car-contact {
+    // 特价车样式由全局样式处理
+        .car-contact {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -1199,6 +1501,8 @@ onActivated(() => {
     }
   }
 }
+
+// 特价车样式由全局样式处理
 
 .services {
   background: white;
@@ -1328,41 +1632,108 @@ onActivated(() => {
   }
 }
 
+@media (max-width: 768px) {
+  .category-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 $spacing-sm;
+  }
+}
+
 @media (max-width: 600px) {
   .category-cards {
     grid-template-columns: repeat(2, 1fr);
-    gap: $spacing-xs;
+    gap: $spacing-md;
+    padding: 0 $spacing-md;
   }
   
   .category-card {
+    background: linear-gradient(135deg, #409EFF 0%, #1976D2 100%);
+    border: none;
+    box-shadow: 0 8px 24px rgba(64, 158, 255, 0.3);
+    
+    &:first-child {
+      background: linear-gradient(135deg, #409EFF 0%, #1976D2 100%);
+    }
+    
+    &:nth-child(2) {
+      background: linear-gradient(135deg, #67C23A 0%, #529B2E 100%);
+      box-shadow: 0 8px 24px rgba(103, 194, 58, 0.3);
+    }
+    
+    &:nth-child(3) {
+      background: linear-gradient(135deg, #E6A23C 0%, #D48806 100%);
+      box-shadow: 0 8px 24px rgba(230, 162, 60, 0.3);
+    }
+    
+    &:nth-child(4) {
+      background: linear-gradient(135deg, #F56C6C 0%, #C03131 100%);
+      box-shadow: 0 8px 24px rgba(245, 108, 108, 0.3);
+    }
+    
     &:hover {
-      transform: translateY(-4px);
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(64, 158, 255, 0.4);
+      
+      &:nth-child(2) {
+        box-shadow: 0 12px 32px rgba(103, 194, 58, 0.4);
+      }
+      
+      &:nth-child(3) {
+        box-shadow: 0 12px 32px rgba(230, 162, 60, 0.4);
+      }
+      
+      &:nth-child(4) {
+        box-shadow: 0 12px 32px rgba(245, 108, 108, 0.4);
+      }
     }
   }
   
+  .category-card {
+    // 移除强制正方形，改为自适应高度
+    // aspect-ratio: 1;
+  }
+  
   .category-card-inner {
-    padding: $spacing-sm;
-    gap: $spacing-xs;
-    min-height: 100px;
+    padding: $spacing-md;
+    gap: $spacing-sm;
+    min-height: 80px; // 进一步减小最小高度
+    color: white;
   }
   
   .category-icon-wrapper {
     width: 48px;
     height: 48px;
     border-radius: 12px;
+    background: transparent;
+    border: none;
   }
   
   .category-icon {
-    font-size: 20px;
+    font-size: 36px;
+    color: white;
+  }
+  
+  .category-svg-icon {
+    width: 36px;
+    height: 36px;
   }
   
   .category-content {
     .category-title {
-      font-size: 0.95rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     .category-description {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
   }
 }
@@ -1533,5 +1904,70 @@ onActivated(() => {
   }
 }
 
+/* 加载状态样式 */
+.loading-cars {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .loading-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    
+    .loading-card-content {
+      padding: 16px;
+    }
+  }
+}
+
+/* 全局加载指示器 */
+.global-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  
+  .loading-spinner {
+    text-align: center;
+    
+    .spinner-icon {
+      font-size: 48px;
+      color: #409eff;
+      animation: rotate 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    .loading-text {
+      font-size: 16px;
+      color: #606266;
+      margin: 0;
+      font-weight: 500;
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 </style>

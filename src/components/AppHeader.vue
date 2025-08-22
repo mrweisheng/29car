@@ -55,8 +55,8 @@
         </div>
       </div>
       
-      <div class="logo">
-        <img src="@/logo/eazycar.png" alt="易发粤港车" class="logo-image" />
+      <div class="logo" @click="handleLogoClick">
+        <img src="@/logo/eazycar.png" alt="明哥粤港车" class="logo-image" />
         <span class="logo-text">{{ $t('home.header.tagline') }}</span>
       </div>
       
@@ -156,6 +156,15 @@ const handleNavigation = (path) => {
     scrollToTop()
   }, 100)
 }
+
+// Logo点击处理
+const handleLogoClick = () => {
+  // 如果当前不在主页，则导航到主页
+  if (router.currentRoute.value.path !== '/') {
+    handleNavigation('/')
+  }
+  // 如果已经在主页，则无任何效果
+}
 </script>
 
 <style scoped>
@@ -193,6 +202,12 @@ const handleNavigation = (path) => {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .logo-image {

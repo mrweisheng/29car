@@ -11,7 +11,7 @@
       <div class="drawer-header">
         <div class="title-area">
           <div class="title-line">
-            <h3 class="vehicle-title">{{ props.data ? `${props.data.brand} ${props.data.model}` : '车辆详情' }}</h3>
+            <h3 class="vehicle-title">{{ props.data ? `${props.data.brand || ''} ${props.data.model || ''}`.trim() || '车辆详情' : '车辆详情' }}</h3>
             <span v-if="props.data?.year" class="vehicle-year">{{ props.data.year }}</span>
           </div>
           <div v-if="props.data && (props.data.vehicle_type || props.data.fuel_type)" class="subtitle">
@@ -35,9 +35,52 @@
           {{ console.log('🎭 VehicleDetailDrawer 渲染状态:', { loading: props.loading, error: props.error, data: !!props.data, hasData: !!props.data && !props.loading }) }}
         </div>
         <!-- 加载状态 -->
-        <div v-if="props.loading" class="loading-container">
-          <el-skeleton :rows="8" animated />
+        <div v-if="props.loading && !props.data" class="loading-container">
+          <div class="loading-header">
+            <el-skeleton-item variant="h3" style="width: 200px; height: 24px;" />
+            <el-skeleton-item variant="text" style="width: 150px; height: 16px; margin-top: 8px;" />
+          </div>
+          <div class="loading-content">
+            <!-- 移动端加载布局 -->
+            <div v-if="isMobile" class="mobile-loading-layout">
+              <el-skeleton-item variant="image" style="width: 100%; height: 190px; border-radius: 8px; margin-bottom: 16px;" />
+              <div class="loading-info">
+                <el-skeleton-item variant="h3" style="width: 80%; height: 20px; margin-bottom: 12px;" />
+                <el-skeleton-item variant="text" style="width: 60%; height: 14px; margin-bottom: 8px;" />
+                <el-skeleton-item variant="text" style="width: 40%; height: 16px; margin-bottom: 8px;" />
+                <el-skeleton-item variant="text" style="width: 70%; height: 14px; margin-bottom: 16px;" />
+                <div class="loading-specs">
+                  <div v-for="i in 4" :key="i" class="loading-spec-item">
+                    <el-skeleton-item variant="text" style="width: 100%; height: 40px; border-radius: 8px;" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 桌面端加载布局 -->
+            <div v-else class="desktop-loading-layout">
+              <div class="loading-image-section">
+                <el-skeleton-item variant="image" style="width: 100%; height: 280px; border-radius: 8px;" />
+                <div class="loading-thumbs">
+                  <div v-for="i in 4" :key="i" class="loading-thumb">
+                    <el-skeleton-item variant="image" style="width: 72px; height: 48px; border-radius: 6px;" />
+                  </div>
+                </div>
+              </div>
+              <div class="loading-info-section">
+                <el-skeleton-item variant="h3" style="width: 80%; height: 20px; margin-bottom: 12px;" />
+                <el-skeleton-item variant="text" style="width: 60%; height: 14px; margin-bottom: 8px;" />
+                <el-skeleton-item variant="text" style="width: 40%; height: 16px; margin-bottom: 16px;" />
+                <div class="loading-specs">
+                  <div v-for="i in 5" :key="i" class="loading-spec-item">
+                    <el-skeleton-item variant="text" style="width: 100%; height: 40px; border-radius: 8px;" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+
 
         <!-- 错误状态：仅当存在错误且没有可用数据时展示 -->
         <div v-else-if="!!props.error && !props.data" class="error-container">
@@ -48,15 +91,29 @@
 
         <!-- 数据展示 -->
         <div v-else-if="props.data" class="detail-content">
+          <!-- 渐进式加载覆盖层 -->
+          <div v-if="props.loading && props.data._isPreloaded" class="progressive-loading-overlay">
+            <div class="progressive-loading-content">
+              <el-icon class="is-loading"><Loading /></el-icon>
+              <span>正在加载详细信息...</span>
+            </div>
+          </div>
+          
           <!-- 移动端布局（吸收 VehicleDetail.vue 风格） -->
           <div v-if="isMobile" class="mobile-detail-layout">
             <div class="image-block">
-              <img
-                :src="currentImage"
-                :alt="props.data.brand + ' ' + props.data.model"
-                class="hero-image"
-                @error="$event.target.src = '/default-car.jpg'"
-              />
+              <div class="image-container">
+                <img
+                  :src="currentImage"
+                  :alt="props.data.brand + ' ' + props.data.model"
+                  class="hero-image"
+                  @load="handleImageLoad"
+                  @error="handleImageError"
+                />
+                <div v-if="imageLoading" class="image-loading-overlay">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                </div>
+              </div>
               <div class="thumbs" v-if="props.data.images && props.data.images.length > 1">
                 <div
                   v-for="(img, idx) in props.data.images"
@@ -75,9 +132,11 @@
                 <div class="price-section">
                   <div class="current-price">
                     <span class="price-label">现价</span>
-                    <span class="price-value">{{ formatCurrencyHKD(props.data.current_price) }}</span>
+                    <span class="price-value" :class="{ 'special-offer-price': props.data.is_special_offer === 1 }">
+                      {{ formatCurrencyHKD(props.data.current_price) }}
+                    </span>
                   </div>
-                  <div v-if="props.data.original_price && Number(props.data.original_price) > Number(props.data.current_price)" class="original-price">
+                  <div v-if="shouldShowOriginalPrice" class="original-price">
                     <span class="price-label">原价</span>
                     <span class="price-value original">{{ formatCurrencyHKD(props.data.original_price) }}</span>
                     <span class="discount">省 {{ formatCurrencyHKD(Number(props.data.original_price) - Number(props.data.current_price)) }}</span>
@@ -119,10 +178,15 @@
                   <div class="contact-details">
                     <div class="contact-item">
                       <el-icon><Phone /></el-icon>
-                      <span>明哥 98702065</span>
+                      <span>{{ contactInfo.name }} {{ contactInfo.phone }}</span>
                     </div>
                   </div>
-                  <el-button type="primary" class="contact-btn" @click="handleContact">联系明哥</el-button>
+                  <div class="contact-buttons">
+                    <el-button type="primary" class="contact-btn phone-btn" @click="handleCopyPhone">
+                      <el-icon><Phone /></el-icon>
+                      复制号码
+                    </el-button>
+                  </div>
                 </div>
               </el-card>
             </div>
@@ -131,7 +195,18 @@
           <!-- 桌面端布局（两栏，参考 VehicleDetail.vue） -->
           <div v-else class="detail-main">
             <div class="image-section">
-              <img :src="currentImage" :alt="props.data.brand + ' ' + props.data.model" class="main-image" @error="$event.target.src = '/default-car.jpg'" />
+              <div class="image-container">
+                <img 
+                  :src="currentImage" 
+                  :alt="props.data.brand + ' ' + props.data.model" 
+                  class="main-image" 
+                  @load="handleImageLoad"
+                  @error="handleImageError"
+                />
+                <div v-if="imageLoading" class="image-loading-overlay">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                </div>
+              </div>
 
               <div class="thumbs" v-if="props.data.images && props.data.images.length > 1">
                 <div v-for="(img, idx) in props.data.images" :key="idx" class="thumb" :class="{ active: idx === props.imageIndex }" @click="$emit('update:imageIndex', idx)">
@@ -152,9 +227,11 @@
                 <div class="price-section">
                   <div class="current-price">
                     <span class="price-label">现价</span>
-                    <span class="price-value">{{ formatCurrencyHKD(props.data.current_price) }}</span>
+                    <span class="price-value" :class="{ 'special-offer-price': props.data.is_special_offer === 1 }">
+                      {{ formatCurrencyHKD(props.data.current_price) }}
+                    </span>
                   </div>
-                  <div v-if="props.data.original_price && Number(props.data.original_price) > Number(props.data.current_price)" class="original-price">
+                  <div v-if="shouldShowOriginalPrice" class="original-price">
                     <span class="price-label">原价</span>
                     <span class="price-value original">{{ formatCurrencyHKD(props.data.original_price) }}</span>
                     <span class="discount">省 {{ formatCurrencyHKD(Number(props.data.original_price) - Number(props.data.current_price)) }}</span>
@@ -189,10 +266,15 @@
                   <div class="contact-details">
                     <div class="contact-item">
                       <el-icon><Phone /></el-icon>
-                      <span>明哥 52311812</span>
+                      <span>{{ contactInfo.name }} {{ contactInfo.phone }}</span>
                     </div>
                   </div>
-                  <el-button type="primary" class="contact-btn" @click="handleContact">联系明哥</el-button>
+                  <div class="contact-buttons">
+                    <el-button type="primary" class="contact-btn phone-btn" @click="handleCopyPhone">
+                      <el-icon><Phone /></el-icon>
+                      复制号码
+                    </el-button>
+                  </div>
                 </div>
               </el-card>
             </div>
@@ -212,7 +294,9 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { Close, Van, Phone, Calendar, Cpu, User as UserIcon } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { Close, Van, Phone, Calendar, Cpu, User as UserIcon, ChatDotRound } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 
 const props = defineProps({
   visible: {
@@ -256,12 +340,102 @@ watch(() => props.error, (newVal) => {
 
 const emit = defineEmits(['close', 'reload', 'update:imageIndex', 'contact'])
 
+// 用户状态管理
+const userStore = useUserStore()
+
+// 判断是否为指定用户（mingge）
+const isMinggeUser = computed(() => {
+  // 确保用户状态已完全初始化
+  if (!userStore.isInitialized || userStore.isInitializing) {
+    return false
+  }
+  const result = userStore.isLoggedIn && userStore.userInfo?.username === 'mingge'
+  console.log('👤 用户状态检查:', {
+    isLoggedIn: userStore.isLoggedIn,
+    username: userStore.userInfo?.username,
+    isMinggeUser: result,
+    isInitialized: userStore.isInitialized,
+    isInitializing: userStore.isInitializing
+  })
+  return result
+})
+
+// 是否显示原价的计算属性
+const shouldShowOriginalPrice = computed(() => {
+  // 必须有原价且原价大于现价
+  if (!props.data?.original_price || Number(props.data.original_price) <= Number(props.data.current_price)) {
+    return false
+  }
+  
+  // 特价车辆：只有明哥用户能看到原价
+  if (props.data?.is_special_offer === 1) {
+    return isMinggeUser.value
+  }
+  
+  // 普通车辆：所有用户都能看到原价
+  return true
+})
+
+// 联系信息计算属性
+const contactInfo = computed(() => {
+  // 特价车辆：只有明哥用户能看到原始联系信息，其他用户都显示硬编码
+  if (props.data?.is_special_offer === 1) {
+    // 特价车辆逻辑
+    if (isMinggeUser.value) {
+      // 明哥用户看特价车原始联系信息
+      return {
+        name: props.data.contact_name || '明哥',
+        phone: props.data.phone_number || '98702065'
+      }
+    } else {
+      // 非明哥用户看特价车硬编码信息
+      return {
+        name: '明哥',
+        phone: '98702065'
+      }
+    }
+  } else {
+    // 非特价车辆：任何非明哥用户都显示硬编码
+    if (isMinggeUser.value && props.data) {
+      // 明哥用户看真实联系信息
+      return {
+        name: props.data.contact_name || '明哥',
+        phone: props.data.phone_number || '98702065'
+      }
+    } else {
+      // 非明哥用户显示硬编码信息
+      return {
+        name: '明哥',
+        phone: '98702065'
+      }
+    }
+  }
+})
+
 // 移动端检测
 const isMobile = ref(false)
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768
 }
+
+// 图片加载状态
+const imageLoading = ref(true)
+
+// 图片加载处理
+const handleImageLoad = () => {
+  imageLoading.value = false
+}
+
+const handleImageError = (event) => {
+  imageLoading.value = false
+  event.target.src = '/default-car.jpg'
+}
+
+// 监听图片索引变化，重置加载状态
+watch(() => props.imageIndex, () => {
+  imageLoading.value = true
+})
 
 onMounted(() => {
   checkMobile()
@@ -289,6 +463,30 @@ const currentImage = computed(() => {
   return result
 })
 
+// 图片预加载
+const preloadImages = (images) => {
+  if (!images || !Array.isArray(images)) return
+  
+  images.forEach(imgSrc => {
+    if (imgSrc && imgSrc !== '/default-car.jpg') {
+      const img = new Image()
+      img.src = imgSrc
+    }
+  })
+}
+
+// 监听数据变化，预加载图片
+watch(() => props.data?.images, (newImages) => {
+  if (newImages && newImages.length > 0) {
+    // 延迟预加载，避免阻塞主线程
+    setTimeout(() => {
+      preloadImages(newImages)
+    }, 100)
+  }
+}, { immediate: true })
+
+
+
 // 格式化价格
 const formatPrice = (price) => {
   if (!price) return '面议'
@@ -297,16 +495,47 @@ const formatPrice = (price) => {
 
 // HKD 价格格式化（与 VehicleDetail 页面一致）
 const formatCurrencyHKD = (value) => {
+  // 如果已经是格式化的字符串，直接返回
+  if (typeof value === 'string' && value.includes('HKD$98,000（包含车+两地牌）')) {
+    return value
+  }
+  
   if (value === undefined || value === null || value === '' || Number(value) === 0) {
     return '价格面议'
   }
+  
+  // 特价车辆的价格显示逻辑
+  if (props.data?.is_special_offer === 1) {
+    // 明哥用户看到真实价格
+    if (isMinggeUser.value) {
+      return `HKD$${Number(value).toLocaleString()}`
+    }
+    // 非明哥用户看到固定特价信息
+    return 'HKD$98,000（包含车+两地牌）'
+  }
+  
+  // 非特价车辆的正常价格显示
   return `HKD$${Number(value).toLocaleString()}`
 }
 
-// 处理联系
-const handleContact = () => {
-  // 拨打电话
-  window.location.href = 'tel:98702065'
+// 仅复制号码
+const handleCopyPhone = async () => {
+  try {
+    const phone = contactInfo.value.phone
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(phone)
+    } else {
+      const input = document.createElement('input')
+      input.value = phone
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    ElMessage.success('手机号已复制')
+  } catch (e) {
+    ElMessage.error(`复制失败，请手动复制：${contactInfo.value.phone}`)
+  }
 }
 </script>
 
@@ -334,8 +563,22 @@ const handleContact = () => {
   }
   
   :deep(.el-drawer__body) {
-    padding: 0;
+  padding: 0;
+  
+  /* 移动端隐藏滚动条但保持滚动功能 */
+  @media (max-width: 768px) {
+    /* 隐藏 Webkit 浏览器的滚动条 */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* 隐藏 Firefox 的滚动条 */
+    scrollbar-width: none;
+    
+    /* 隐藏 IE 的滚动条 */
+    -ms-overflow-style: none;
   }
+}
 }
 
 .vehicle-drawer-content {
@@ -429,13 +672,106 @@ const handleContact = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 12px 12px;
   min-height: 0; /* 确保flex子元素可以收缩 */
+}
+
+.detail-content {
+  position: relative; /* 为渐进式加载覆盖层定位 */
 }
 
 .loading-container, .error-container {
   padding: 20px;
   text-align: center;
+}
+
+/* 渐进式加载覆盖层 */
+.progressive-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progressive-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(64, 158, 255, 0.15);
+  min-width: 200px;
+  text-align: center;
+}
+
+.progressive-loading-content .el-icon {
+  font-size: 28px;
+  color: #409eff;
+  animation: spin 1s linear infinite;
+}
+
+.progressive-loading-content span {
+  color: #606266;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 加载状态样式 */
+.loading-container {
+  .loading-header {
+    margin-bottom: 20px;
+  }
+  
+  .loading-content {
+    .mobile-loading-layout {
+      .loading-info {
+        .loading-specs {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 8px;
+          margin-top: 16px;
+        }
+      }
+    }
+    
+    .desktop-loading-layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 16px;
+      
+      .loading-image-section {
+        .loading-thumbs {
+          display: flex;
+          gap: 8px;
+          margin-top: 8px;
+        }
+      }
+      
+      .loading-info-section {
+        .loading-specs {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          gap: 8px;
+          margin-top: 16px;
+        }
+      }
+    }
+  }
 }
 
 .detail-main {
@@ -445,12 +781,38 @@ const handleContact = () => {
   overflow: hidden; /* 防止内容溢出 */
 }
 
-.main-image {
+.image-container {
+  position: relative;
   width: 100%;
   height: 280px;
   border-radius: 8px;
   overflow: hidden;
+  background: #f5f5f5;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+}
+
+.image-loading-overlay .el-icon {
+  font-size: 24px;
+  color: #409eff;
 }
 
 .thumbs {
@@ -554,6 +916,8 @@ const handleContact = () => {
   font-weight: 700;
 }
 
+  /* 特价车样式由全局样式处理 */
+
 .original-price {
   display: flex;
   align-items: center;
@@ -636,24 +1000,42 @@ const handleContact = () => {
 
 .mobile-detail-layout .image-block { flex-shrink: 0; }
 
-.mobile-detail-layout .image-block .hero-image {
+.mobile-detail-layout .image-block .image-container {
+  position: relative;
   width: 100%;
-  height: 190px; /* 增大以确保可见 */
+  height: 190px;
   min-height: 190px;
-  display: block;
   border-radius: 8px;
   margin-bottom: 8px;
-  object-fit: cover;
   background: #f5f5f5;
+  overflow: hidden;
+}
+
+.mobile-detail-layout .image-block .hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
 }
 
 .mobile-detail-layout .scroll-area {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 4px;
   min-height: 0; /* 确保可以收缩 */
   height: 0; /* 强制使用flex布局的高度 */
+  
+  /* 隐藏滚动条但保持滚动功能 */
+  /* 隐藏 Webkit 浏览器的滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* 隐藏 Firefox 的滚动条 */
+  scrollbar-width: none;
+  
+  /* 隐藏 IE 的滚动条 */
+  -ms-overflow-style: none;
 }
 
 /* 联系区复用 VehicleDetail 风格 */
@@ -670,8 +1052,32 @@ const handleContact = () => {
   gap: 6px;
   color: #303133;
 }
+.contact-section .contact-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .contact-section .contact-btn {
-  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.contact-section .contact-btn .el-icon {
+  font-size: 16px;
+}
+
+.contact-section .whatsapp-btn {
+  background: #25d366;
+  border-color: #25d366;
+}
+
+.contact-section .whatsapp-btn:hover {
+  background: #128c7e;
+  border-color: #128c7e;
 }
 
 .mobile-detail-layout .info-block {
@@ -705,6 +1111,21 @@ const handleContact = () => {
     width: 60px;
     height: 40px;
     flex: 0 0 60px; /* 防止缩略图被压缩，确保完整显示 */
+  }
+  
+  /* 移动端加载覆盖层优化 */
+  .progressive-loading-content {
+    padding: 24px 20px;
+    min-width: 180px;
+    border-radius: 12px;
+  }
+  
+  .progressive-loading-content .el-icon {
+    font-size: 24px;
+  }
+  
+  .progressive-loading-content span {
+    font-size: 13px;
   }
 }
 </style>

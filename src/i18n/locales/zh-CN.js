@@ -43,7 +43,7 @@ export default {
 
   // 搜索页面
   search: {
-    placeholder: '请输入车辆名称或者型号搜索',
+    placeholder: '请输入车型搜索如730',
     filterTitle: '筛选条件',
     noResults: '暂无搜索结果',
     resultsFound: '辆车',
@@ -56,6 +56,8 @@ export default {
       priceRangeTitle: '价格范围',
       year: '年份',
       selectYear: '选择年份',
+      seats: '座位数',
+      selectSeats: '选择座位数',
       selectPriceRange: '选择价格范围',
       minPrice: '最低价格',
       maxPrice: '最高价格',
@@ -72,7 +74,15 @@ export default {
         '50to100': '50萬-100萬',
         over100: '100萬以上'
       },
+      seats: {
+        all: '不限座位',
+        '5': '5座',
+        '6': '6座',
+        '7': '7座',
+        unknown: '座位未知'
+      },
       resetFilters: '重置筛选',
+      reset: '重置筛选',
       allVehicles: '全部车辆'
     },
     fuelTypes: {
@@ -84,25 +94,30 @@ export default {
     badges: {
       new: '新上架',
       classic: '经典'
-    }
+    },
+    priceNegotiable: '价格面议',
+    specialOfferPrice: 'HKD$98,000（包含车+两地牌）',
+    unknownVehicle: '未知车型',
+    noContact: '暂无联系人',
+    noPhone: '暂无电话'
   },
 
   // 首页
   home: {
     header: {
-      tagline: '易发粤港车'
+      tagline: '明哥粤港车'
     },
     hero: {
-      title: '易发粤港车',
+              title: '明哥粤港车',
       subtitle: '为您提供全方位的粤港车及中港两地牌服务',
       getStarted: '立即开始',
       learnMore: '了解更多',
       sellCar: '寄售车辆',
       browseCars: '浏览车辆',
       stats: {
-        vehicles: '车辆',
-        users: '用户',
-        deals: '交易'
+        years: '年经营历史',
+        customers: '服务客户',
+        transactions: '成功交易'
       }
     },
     features: {
@@ -126,6 +141,10 @@ export default {
     },
     featured: {
       title: '精选车辆',
+      viewAll: '查看全部'
+    },
+    specialOffer: {
+      title: '特价车辆',
       viewAll: '查看全部'
     },
     latest: {
@@ -176,6 +195,25 @@ export default {
       searchMore: '搜索更多',
       searchMoreDesc: '探索更多车辆选择，找到完美座驾'
     },
+    // 移动端分类卡片
+    mobileCategory: {
+      searchCars: {
+        title: '个人找车',
+        description: '搜索心仪车辆，快速找到理想座驾'
+      },
+      crossBorder: {
+        title: '中港两地牌',
+        description: '专业办理中港两地牌照服务'
+      },
+      specialOffer: {
+        title: '特价专区',
+        description: '精选特价车辆，优惠不容错过'
+      },
+      vehicleRegistration: {
+        title: '车辆登记',
+        description: '专业车辆登记服务，手续便捷'
+      }
+    },
     stats: {
       satisfiedCustomers: '满意客户',
       serviceVehicles: '服务车辆',
@@ -187,69 +225,71 @@ export default {
   // 关于我们
   about: {
     title: '关于我们',
-    subtitle: '了解易发粤港车的故事和使命',
+    subtitle: '专注中港车辆服务，您的信誉之选',
     story: {
-      title: '关于我们 - 42年沉淀，信誉为本',
-      content1: '始于1982，我们更懂您的托付。自1982年创立，易发粤港车已服务中港客户42年。我们不是一家新兴的咨询公司，而是一家有深厚根基的香港实体车行。',
-      content2: '我们深知，一辆合适的车对您而言，是事业的助力，是时间的价值，更是身份的象征。42年来，我们只坚守一个信条："受人之托，忠人之事"。选择易发粤港车，就是选择一份历经时间考验的安心。',
+              title: '明哥粤港车 - 专注中港车辆服务',
+              content1: '始于1982，我们更懂您的托付。自1982年创立，明哥粤港车已专注中港车辆服务多年。我们不是一家新兴的咨询公司，而是一家有深厚根基的香港实体车行。',
+              content2: '我们深知，一张粤Z中港两地牌对您而言，是事业的助力，是时间的价值，更是身份的象征。多年来，我们只坚守一个信条："受人之托，忠人之事"。选择明哥粤港车，就是选择一份历经时间考验的安心。',
       officeEnvironment: '公司办公环境'
     },
-    values: {
-      title: '核心价值观',
+    advantages: {
+      title: '核心优势',
+      experience: {
+        title: '多年专业经验',
+        description: '专注粤Z中港两地牌代办服务多年，信誉为本，专业可靠'
+      },
+      entity: {
+        title: '香港实体车行',
+        description: '上水马会道3号，随时欢迎实地考察，合作更放心'
+      },
+      service: {
+        title: '一站式VIP服务',
+        description: '从资质评估到成功上牌，全程专业代办，让您省心省力'
+      }
+    },
+    commitments: {
+      title: '服务承诺',
+      guarantee: {
+        title: '结果保障',
+        description: '不成功，全额退款。您的托付，我们用最实际的行动来保障'
+      },
       professional: {
         title: '专业服务',
-        description: '提供专业、可靠的汽车服务，确保客户满意度'
-      },
-      customerFirst: {
-        title: '客户至上',
-        description: '以客户需求为中心，提供个性化的服务方案'
-      },
-      efficient: {
-        title: '高效便捷',
-        description: '利用现代技术，提供高效便捷的服务体验'
-      },
-      safe: {
-        title: '安全可靠',
-        description: '确保服务的安全性和可靠性，让客户放心'
-      },
-      innovative: {
-        title: '创新进取',
-        description: '持续创新服务模式，引领行业发展趋势'
-      },
-      integrity: {
-        title: '诚信经营',
-        description: '坚持诚信为本，建立长期信任关系'
+        description: '1对1资质评估，全程材料代办，确保高通过率'
       }
     },
-    team: {
-      title: '我们的团队',
-      members: {
-        manager: {
-          name: '张经理',
-          position: '总经理',
-          description: '拥有15年汽车行业经验，专注于客户服务优化'
-        },
-        engineer: {
-          name: '李工程师',
-          position: '技术总监',
-          description: '资深汽车技术专家，负责技术团队管理'
-        },
-        consultant: {
-          name: '王顾问',
-          position: '客户服务总监',
-          description: '专注于客户体验提升，确保服务质量'
-        }
+    services: {
+      title: '服务内容',
+        description: '您将获得由明哥粤港车资深团队提供的"一站式"专属服务',
+      list: {
+        assessment: '1对1资质评估与优化建议',
+        materials: '全程材料代办服务',
+        qualification: '企业资格配置',
+        government: '全流程政府事务代办',
+        accompany: '专人VIP陪同服务',
+        lifetime: '终身顾问服务'
       }
     },
-    service: {
-      title: '专业服务',
-      description: '我们提供专业的汽车服务，从销售到售后，全程为您保驾护航。凭借多年的行业经验和专业团队，确保每一位客户都能享受到优质的服务体验。'
+    contact: {
+      title: '联系我们',
+      address: {
+        title: '公司地址',
+        value: '上水马会道3号'
+      },
+      phone: {
+        title: '联系电话',
+        value: '98702065'
+      },
+      wechat: {
+        title: '微信联系',
+        value: '请添加微信咨询'
+      }
     }
   },
 
   // 页脚
   footer: {
-    platform: '易发粤港车',
+            platform: '明哥粤港车',
     services: '服务',
     about: '关于我们',
     carPurchase: '汽车购买',
@@ -282,7 +322,7 @@ export default {
   // 认证
   auth: {
     title: '登录注册',
-    subtitle: '欢迎来到易发粤港车，请登录或注册您的账户',
+            subtitle: '欢迎来到明哥粤港车，请登录或注册您的账户',
     login: {
       title: '登录'
     },
@@ -388,5 +428,11 @@ export default {
     zhHK: '繁體中文',
     enUS: 'English'
   },
-  searchPlaceholder: '请输入车辆名称或者型号搜索'
+  searchPlaceholder: '请输入车型搜索如730',
+
+  // 特价车辆专门页面
+  specialOffer: {
+    title: '特价车+牌组合',
+    subtitle: '精选特价车辆，包含中港两地牌，优惠不容错过'
+  }
 }

@@ -99,12 +99,12 @@
             <div class="price-section">
               <div class="current-price">
                 <span class="price-label">{{ $t('vehicleDetail.currentPrice') }}</span>
-                <span class="price-value">{{ formatPrice(vehicle.current_price) }}</span>
+                <span class="price-value" :class="{ 'special-offer-price': vehicle.is_special_offer === 1 }">{{ getFormattedPrice(vehicle).currentPrice }}</span>
               </div>
-              <div v-if="vehicle.original_price && vehicle.original_price > vehicle.current_price" class="original-price">
+              <div v-if="getFormattedPrice(vehicle).hasDiscount" class="original-price">
                 <span class="price-label">{{ $t('vehicleDetail.originalPrice') }}</span>
-                <span class="price-value original">{{ formatPrice(vehicle.original_price) }}</span>
-                <span class="discount">{{ $t('vehicleDetail.discount', { amount: formatPrice(vehicle.original_price - vehicle.current_price) }) }}</span>
+                <span class="price-value original">{{ getFormattedPrice(vehicle).originalPrice }}</span>
+                <span class="discount">{{ $t('vehicleDetail.discount', { amount: getFormattedPrice(vehicle).discountAmount }) }}</span>
               </div>
             </div>
             
@@ -146,11 +146,11 @@
               <div class="contact-details">
                 <div class="contact-item">
                   <el-icon><User /></el-icon>
-                  <span>{{ vehicle.contact_name }}</span>
+                  <span>{{ contactInfo.name }}</span>
                 </div>
                 <div class="contact-item">
                   <el-icon><Phone /></el-icon>
-                  <span>{{ vehicle.phone_number }}</span>
+                  <span>{{ contactInfo.phone }}</span>
                 </div>
               </div>
               <el-button type="primary" size="large" class="contact-btn" @click="handleContact">
@@ -199,6 +199,7 @@ import { ElMessage } from 'element-plus'
 import { Picture, User, Phone, ChatDotRound, ArrowLeft } from '@element-plus/icons-vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores/user'
 
 export default {
   name: 'VehicleDetail',
@@ -231,6 +232,54 @@ export default {
     const imageList = computed(() => {
       if (!vehicle.value?.images) return ['/default-car.jpg']
       return vehicle.value.images.map(img => img.image_url)
+    })
+    
+    // 用户状态管理
+    const userStore = useUserStore()
+    
+    // 明哥用户检测
+    const isMinggeUser = computed(() => {
+      // 确保用户状态已完全初始化
+      if (!userStore.isInitialized || userStore.isInitializing) {
+        return false
+      }
+      return userStore.isLoggedIn && userStore.userInfo?.username === 'mingge'
+    })
+    
+    // 联系信息计算属性
+    const contactInfo = computed(() => {
+      // 特价车辆：只有明哥用户能看到原始联系信息，其他用户都显示硬编码
+      if (vehicle.value?.is_special_offer === 1) {
+        // 特价车辆逻辑
+        if (isMinggeUser.value) {
+          // 明哥用户看特价车原始联系信息
+          return {
+            name: vehicle.value.contact_name || '明哥',
+            phone: vehicle.value.phone_number || '98702065'
+          }
+        } else {
+          // 非明哥用户看特价车硬编码信息
+          return {
+            name: '明哥',
+            phone: '98702065'
+          }
+        }
+      } else {
+        // 非特价车辆：任何非明哥用户都显示硬编码
+        if (isMinggeUser.value && vehicle.value) {
+          // 明哥用户看真实联系信息
+          return {
+            name: vehicle.value.contact_name || '明哥',
+            phone: vehicle.value.phone_number || '98702065'
+          }
+        } else {
+          // 非明哥用户显示硬编码信息
+          return {
+            name: '明哥',
+            phone: '98702065'
+          }
+        }
+      }
     })
     
     // 方法
@@ -269,9 +318,55 @@ export default {
       }
     }
     
-    const formatPrice = (price) => {
-      if (!price) return t('vehicleDetail.negotiable')
-      return `¥${(price / 10000).toFixed(1)}万`
+    // 格式化价格显示
+    const formatPrice = (currentPrice, originalPrice) => {
+      // 如果已经是格式化的字符串，直接返回
+      if (typeof currentPrice === 'string' && currentPrice.includes('HKD$98,000（包含车+两地牌）')) {
+        return {
+          currentPrice: currentPrice,
+          hasDiscount: false
+        }
+      }
+      
+      if (!currentPrice || currentPrice === '0.00') return '价格面议'
+      
+      // 默认显示现价
+      const formattedCurrentPrice = `HKD$${parseFloat(currentPrice).toLocaleString()}`
+      
+      // 如果有原价且原价大于现价，返回折扣信息
+      if (originalPrice && originalPrice !== '0.00' && parseFloat(originalPrice) > parseFloat(currentPrice)) {
+        return {
+          currentPrice: formattedCurrentPrice,
+          originalPrice: `HKD$${parseFloat(originalPrice).toLocaleString()}`,
+          discountAmount: `HKD$${(parseFloat(originalPrice) - parseFloat(currentPrice)).toLocaleString()}`,
+          hasDiscount: true
+        }
+      }
+      
+      // 没有折扣的情况
+      return {
+        currentPrice: formattedCurrentPrice,
+        hasDiscount: false
+      }
+    }
+    
+    // 获取格式化的价格信息
+    const getFormattedPrice = (car) => {
+      // 特价车辆的价格显示逻辑
+      if (car?.is_special_offer === 1) {
+        // 明哥用户看到真实价格
+        if (isMinggeUser.value) {
+          return formatPrice(car.current_price, car.original_price)
+        }
+        // 非明哥用户看到固定特价信息
+        return {
+          currentPrice: 'HKD$98,000（包含车+两地牌）',
+          hasDiscount: false
+        }
+      }
+      
+      // 非特价车辆的正常价格显示
+      return formatPrice(car.current_price, car.original_price)
     }
     
     const formatDate = (dateString) => {
@@ -280,8 +375,23 @@ export default {
       return new Date(dateString).toLocaleDateString(locale.value)
     }
     
-    const handleContact = () => {
-      ElMessage.info(t('vehicleDetail.contactTip'))
+    const handleContact = async () => {
+      try {
+        const phone = contactInfo.value.phone
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(phone)
+        } else {
+          const input = document.createElement('input')
+          input.value = phone
+          document.body.appendChild(input)
+          input.select()
+          document.execCommand('copy')
+          document.body.removeChild(input)
+        }
+        ElMessage.success('手机号已复制')
+      } catch (e) {
+        ElMessage.error(`复制失败，请手动复制：${contactInfo.value.phone}`)
+      }
     }
     
     const goBack = () => {
@@ -300,7 +410,8 @@ export default {
       currentImageIndex,
       currentImage,
       imageList,
-      formatPrice,
+      contactInfo,
+      getFormattedPrice,
       formatDate,
       handleContact,
       goBack
@@ -521,6 +632,8 @@ export default {
     .price-value {
       font-size: 2.2rem;
       font-weight: 700;
+      
+      // 特价车样式由全局样式处理
     }
   }
   

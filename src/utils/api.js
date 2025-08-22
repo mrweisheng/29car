@@ -4,10 +4,13 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
-  timeout: 10000,
+  timeout: 30000, // 增加超时时间到30秒，适应网络较差的情况
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  // 重试配置
+  retry: 3,
+  retryDelay: 1000
 })
 
 // 请求拦截器
@@ -17,6 +20,9 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+      // console.log('🔐 API请求携带token:', config.url)
+    } else {
+      // console.log('🔐 API请求未携带token:', config.url)
     }
     return config
   },
@@ -32,7 +38,10 @@ api.interceptors.response.use(
     
     // 如果返回的状态码不是200或201，说明接口有问题，应该提示用户
     if (code !== 200 && code !== 201) {
-      ElMessage.error(message || '请求失败')
+      // 只在非静默模式下显示错误消息
+      if (!response.config?.silent) {
+        ElMessage.error(message || '请求失败')
+      }
       return Promise.reject(new Error(message || '请求失败'))
     }
     
@@ -56,6 +65,10 @@ api.interceptors.response.use(
           break
         case 403:
           message = '禁止访问'
+          // 对于403错误，只在非静默模式下显示
+          if (!error.config?.silent) {
+            ElMessage.error(message)
+          }
           break
         case 404:
           message = '请求的资源不存在'
@@ -70,8 +83,44 @@ api.interceptors.response.use(
       message = '网络连接失败'
     }
     
-    ElMessage.error(message)
+    // 网络错误时显示更友好的提示
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      message = '网络连接超时，请检查网络后重试'
+    }
+    
+    // 只在非静默模式下显示错误消息
+    if (!error.config?.silent) {
+      ElMessage.error(message)
+    }
+    
     return Promise.reject(error)
+  }
+)
+
+// 重试拦截器
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config
+    
+    // 如果没有配置重试或者已经重试过，直接返回错误
+    if (!config || !config.retry || config.retryCount >= config.retry) {
+      return Promise.reject(error)
+    }
+    
+    // 设置重试计数
+    config.retryCount = config.retryCount || 0
+    config.retryCount++
+    
+    // 延迟重试
+    const delay = new Promise(resolve => {
+      setTimeout(resolve, config.retryDelay || 1000)
+    })
+    
+    await delay
+    
+    // 重试请求
+    return api(config)
   }
 )
 
@@ -93,8 +142,8 @@ export const authAPI = {
   },
   
   // 获取当前用户信息
-  getCurrentUser() {
-    return api.get('/auth/me')
+  getCurrentUser(silent = false) {
+    return api.get('/auth/me', { silent })
   },
   
   // 用户登出
@@ -133,6 +182,11 @@ export const vehicleAPI = {
   // 获取最新上架车辆
   getLatestVehicles() {
     return api.get('/vehicles/latest')
+  },
+  
+  // 获取特价车辆
+  getSpecialOfferVehicles() {
+    return api.get('/vehicles/special-offers')
   }
 }
 

@@ -3,7 +3,7 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
-          <h3>易发粤港车</h3>
+          <h3>明哥粤港车</h3>
           <div class="contact-phone">
             <el-icon><Phone /></el-icon>
             <span>98702065</span>
@@ -48,7 +48,7 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2025 易发粤港车. {{ $t('footer.copyright') }}</p>
+        <p>&copy; 2025 明哥粤港车. {{ $t('footer.copyright') }}</p>
       </div>
     </div>
   </footer>

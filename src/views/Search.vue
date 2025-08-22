@@ -1,35 +1,41 @@
 <template>
   <div class="search-page">
     <AppHeader />
+    
+    <!-- 全局加载指示器 -->
+    <div v-if="loading && !loadingMore" class="global-loading-overlay">
+      <div class="loading-spinner">
+        <el-icon class="spinner-icon"><Loading /></el-icon>
+        <p class="loading-text">正在加载车辆数据...</p>
+      </div>
+    </div>
 
     <!-- 搜索内容区域 -->
     <div class="search-content">
       <!-- 左侧筛选条件（桌面端） -->
       <div class="filters desktop-filters">
-        <!-- 分类筛选 -->
+        <!-- 分类筛选（桌面端） -->
         <div class="filter-section">
           <h3>{{ $t('search.filters.category') }}</h3>
-          <div class="filter-options">
-            <el-button
-              :type="selectedCategory === 'all' ? 'primary' : 'default'"
-              @click="selectCategory('all')"
-              class="filter-btn"
-              :class="{ 'is-selected': selectedCategory === 'all' }"
-            >
-              <el-icon><Grid /></el-icon>
-              {{ $t('search.filters.allVehicles') }}
-            </el-button>
-            <el-button
-              v-for="category in categories"
-              :key="category.value"
-              :type="selectedCategory === category.value ? 'primary' : 'default'"
-              @click="selectCategory(category.value)"
-              class="filter-btn"
-              :class="{ 'is-selected': selectedCategory === category.value }"
-            >
-              <el-icon><component :is="category.icon" /></el-icon>
-              {{ category.label }}
-            </el-button>
+          <div class="filter-content">
+            <div class="filter-options">
+              <button
+                :class="['filter-btn', { active: selectedCategory === 'all' }]"
+                @click="selectCategory('all')"
+              >
+                <el-icon><Grid /></el-icon>
+                {{ $t('search.filters.allVehicles') }}
+              </button>
+              <button
+                v-for="category in categories"
+                :key="category.value"
+                :class="['filter-btn', { active: selectedCategory === category.value }]"
+                @click="selectCategory(category.value)"
+              >
+                <el-icon><component :is="category.icon" /></el-icon>
+                {{ category.label }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -44,12 +50,12 @@
               class="brand-select"
               clearable
             >
-                                 <el-option
-                     v-for="brand in brands"
-                     :key="brand.brand"
-                     :label="brand.brand"
-                     :value="brand.brand"
-                   />
+              <el-option
+                v-for="brand in brands"
+                :key="brand.brand"
+                :label="brand.brand"
+                :value="brand.brand"
+              />
             </el-select>
           </div>
         </div>
@@ -97,14 +103,41 @@
           </div>
         </div>
 
+        <!-- 座位数筛选（桌面端） -->
+        <div class="filter-section">
+          <h3>座位数</h3>
+          <div class="filter-content">
+            <el-select
+              v-model="selectedSeats"
+              :placeholder="$t('search.filters.selectSeats')"
+              @change="selectSeats"
+              class="seats-select"
+              clearable
+            >
+              <el-option
+                :label="$t('search.filters.seats.all')"
+                value="all"
+              />
+                              <el-option
+                  v-for="seat in seatOptions"
+                  :key="seat.value"
+                  :label="seat.label"
+                  :value="seat.value"
+                />
+            </el-select>
+          </div>
+        </div>
+
         <!-- 重置按钮 -->
         <div class="filter-section">
-          <el-button 
-            type="default" 
+          <el-button
+            v-if="hasSelectedFilters"
             @click="resetFilters"
+            type="danger"
+            plain
             class="reset-btn"
           >
-            {{ $t('search.filters.resetFilters') }}
+            {{ $t('search.filters.reset') }}
           </el-button>
         </div>
       </div>
@@ -113,45 +146,50 @@
       <div class="results">
         <!-- 移动端搜索和筛选容器 -->
         <div ref="mobileSearchFilterContainer" class="mobile-search-filter-container" :style="{ display: isMobile ? 'block' : 'none' }">
-          <!-- 上方搜索框 -->
-          <div class="search-section">
+          <!-- 搜索框和按钮同一行 -->
+          <div class="search-filter-row">
             <el-input
               v-model="searchKeyword"
               :placeholder="$t('search.placeholder')"
               class="search-input"
               clearable
               @keyup.enter="doSearch"
-            >
-              <template #append>
-                <el-button type="primary" @click="doSearch">
-                  <el-icon><Search /></el-icon>
-                </el-button>
-              </template>
-            </el-input>
+            />
+            <el-button type="primary" @click="doSearch" class="search-btn">
+              <el-icon><Search /></el-icon>
+            </el-button>
+            <el-button type="default" @click="openFilterDrawer" class="filter-btn">
+              筛选
+            </el-button>
           </div>
 
-          <!-- 移动端筛选栏 -->
-          <div class="mobile-filter-bar">
-            <div class="filter-item" @click="openFilterDrawer">
-              <span class="filter-label">分类</span>
-              <span class="filter-value">{{ getCategoryDisplayName() }}</span>
-              <el-icon><ArrowDown /></el-icon>
+          <!-- 已选择的筛选条件显示 -->
+          <div class="selected-filters" v-if="hasSelectedFilters">
+            <div class="filter-tags">
+              <span v-if="selectedCategory !== 'all'" class="filter-tag">
+                {{ getCategoryDisplayName() }}
+                <el-icon @click="clearCategory" class="clear-icon"><Close /></el-icon>
+              </span>
+              <span v-if="selectedBrand" class="filter-tag">
+                {{ selectedBrand }}
+                <el-icon @click="clearBrand" class="clear-icon"><Close /></el-icon>
+              </span>
+              <span v-if="selectedPriceRange !== 'all'" class="filter-tag">
+                {{ getPriceDisplayName() }}
+                <el-icon @click="clearPriceRange" class="clear-icon"><Close /></el-icon>
+              </span>
+              <span v-if="selectedYear" class="filter-tag">
+                {{ selectedYear }}{{ $t('search.filters.year') }}
+                <el-icon @click="clearYear" class="clear-icon"><Close /></el-icon>
+              </span>
+              <span v-if="selectedSeats !== 'all'" class="filter-tag">
+                {{ getSeatsDisplayName() }}
+                <el-icon @click="clearSeats" class="clear-icon"><Close /></el-icon>
+              </span>
             </div>
-            <div class="filter-item" @click="openFilterDrawer">
-              <span class="filter-label">品牌</span>
-              <span class="filter-value">{{ getBrandDisplayName() }}</span>
-              <el-icon><ArrowDown /></el-icon>
-            </div>
-            <div class="filter-item" @click="openFilterDrawer">
-              <span class="filter-label">价格</span>
-              <span class="filter-value">{{ getPriceDisplayName() }}</span>
-              <el-icon><ArrowDown /></el-icon>
-            </div>
-            <div class="filter-item" @click="openFilterDrawer">
-              <span class="filter-label">年份</span>
-              <span class="filter-value">{{ getYearDisplayName() }}</span>
-              <el-icon><ArrowDown /></el-icon>
-            </div>
+            <el-button type="text" @click="resetFilters" class="reset-btn" style="color: red;">
+              {{ $t('search.filters.reset') }}
+            </el-button>
           </div>
         </div>
 
@@ -174,22 +212,36 @@
 
         <!-- 结果标题（固定） -->
         <div class="results-header" :style="isMobile ? { marginTop: `${mobileHeaderHeight}px` } : {}">
-          <h2>{{ getResultsTitle() }}</h2>
-          <p class="results-count">
-            {{ filteredCars.length }} {{ $t('search.resultsFound') }}
-            <span v-if="pagination.total_count > 0" class="pagination-info">
-              (第 {{ pagination.current_page }} 页，共 {{ pagination.total_pages }} 页)
-            </span>
-          </p>
+          <div class="header-content" :class="{ 'desktop-layout': !isMobile }">
+            <h2>{{ getResultsTitle() }}</h2>
+            <p class="results-count">
+              {{ filteredCars.length }} {{ $t('search.resultsFound') }}
+              <span v-if="pagination.total_count > 0" class="pagination-info">
+                (第 {{ pagination.current_page }} 页，共 {{ pagination.total_pages }} 页)
+              </span>
+            </p>
+          </div>
         </div>
 
         <!-- 车辆列表（可滚动） -->
         <div class="cars-container">
           <!-- 加载状态 -->
           <div v-if="loading" class="loading-container">
-            <el-skeleton :rows="3" animated />
-            <el-skeleton :rows="3" animated />
-            <el-skeleton :rows="3" animated />
+            <div class="loading-header">
+              <el-skeleton-item variant="h3" style="width: 200px; height: 24px;" />
+              <el-skeleton-item variant="text" style="width: 150px; height: 16px; margin-top: 8px;" />
+            </div>
+            <div class="loading-cards">
+              <div v-for="i in 6" :key="i" class="loading-card">
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px;" />
+                <div class="loading-card-content">
+                  <el-skeleton-item variant="h3" style="width: 80%; height: 20px; margin-top: 12px;" />
+                  <el-skeleton-item variant="text" style="width: 60%; height: 14px; margin-top: 8px;" />
+                  <el-skeleton-item variant="text" style="width: 40%; height: 16px; margin-top: 8px;" />
+                  <el-skeleton-item variant="text" style="width: 70%; height: 14px; margin-top: 8px;" />
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- 车辆列表 -->
@@ -200,6 +252,7 @@
               :key="car.id" 
               :data-id="car.vehicle_id"
               @click="handleCarClick(car)"
+              :class="{ 'clicking': car.vehicle_id === currentDetailId }"
             >
               <div class="car-image">
                 <img 
@@ -209,30 +262,40 @@
                   @load="handleImageLoad"
                   loading="lazy"
                 />
-                <div class="car-badge" v-if="car.badge" :data-status="car.badge">{{ car.badge }}</div>
+                <div v-if="car.is_special_offer === 1" class="car-badge special-offer">
+                  <el-icon><Star /></el-icon>
+                </div>
+                <div v-else-if="car.badge" class="car-badge" :data-status="car.badge">{{ car.badge }}</div>
               </div>
               <div class="car-info">
                 <h3 class="car-name">{{ car.name }}</h3>
                 <p class="car-details">{{ car.year }} | {{ car.fuelType }} | {{ formatSeats(car.seats) }}</p>
-                <div class="car-price">
-                  <template v-if="getFormattedPrice(car) === '价格面议'">
-                    <span class="price">价格面议</span>
+                <div class="car-price" :class="{ 'special-offer-price': car.is_special_offer === 1 }">
+                  <template v-if="car.is_special_offer === 1">
+                    <span class="current-price">HKD$98,000（包含車+兩地牌）</span>
                   </template>
                   <template v-else>
-                    <div class="price-container">
-                      <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
-                      <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
-                        {{ getFormattedPrice(car).originalPrice }}
-                      </span>
-                      <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
-                        -{{ getFormattedPrice(car).discountPercent }}%
-                      </span>
-                    </div>
+                                                        <template v-if="getFormattedPrice(car) === '價格面議'">
+                    <span class="price">價格面議</span>
+                  </template>
+                    <template v-else>
+                      <div class="price-container">
+                        <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
+                          {{ getFormattedPrice(car).originalPrice }}
+                        </span>
+                        <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
+                          -{{ getFormattedPrice(car).discountPercent }}%
+                        </span>
+                      </div>
+                    </template>
                   </template>
                 </div>
                 <div class="car-contact">
                   <el-icon><Phone /></el-icon>
-                  <span>明哥 98702065</span>
+                  <span v-if="car.is_special_offer === 1">明哥 98702065</span>
+                  <span v-else-if="isMinggeUser">{{ car.contactName || '明哥' }} {{ car.phoneNumber || '98702065' }}</span>
+                  <span v-else>明哥 98702065</span>
                 </div>
                 <!-- 额外信息 -->
                 <div class="car-extra" v-if="car.transmission || car.engineVolume">
@@ -250,7 +313,20 @@
           
           <!-- 加载更多状态 -->
           <div v-if="loadingMore" class="loading-more">
-            <el-skeleton :rows="2" animated />
+            <div class="loading-more-content">
+              <el-icon class="loading-icon"><Loading /></el-icon>
+              <span class="loading-text">正在加载更多车辆...</span>
+            </div>
+            <div class="loading-more-cards">
+              <div v-for="i in 3" :key="i" class="loading-card">
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px;" />
+                <div class="loading-card-content">
+                  <el-skeleton-item variant="h3" style="width: 80%; height: 20px; margin-top: 12px;" />
+                  <el-skeleton-item variant="text" style="width: 60%; height: 14px; margin-top: 8px;" />
+                  <el-skeleton-item variant="text" style="width: 40%; height: 16px; margin-top: 8px;" />
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- 没有更多数据提示 -->
@@ -281,19 +357,22 @@
         </div>
 
         <!-- 已选择的筛选条件汇总 -->
-        <div class="selected-filters-summary" v-if="hasSelectedFilters">
+        <div class="selected-filters-summary" v-if="selectedCategory !== 'all' || selectedBrand !== '' || selectedPriceRange !== 'all' || selectedYear !== null || selectedSeats !== 'all'">
           <div class="summary-items">
-            <div class="summary-item" v-if="tempCategory !== 'all'">
-              {{ getCategoryDisplayName(tempCategory) }}
+            <div class="summary-item" v-if="selectedCategory !== 'all'">
+              {{ getCategoryDisplayName(selectedCategory) }}
             </div>
-            <div class="summary-item" v-if="tempBrand !== ''">
-              {{ tempBrand }}
+            <div class="summary-item" v-if="selectedBrand !== ''">
+              {{ selectedBrand }}
             </div>
-            <div class="summary-item" v-if="tempPriceRange !== 'all'">
-              {{ getPriceDisplayName(tempPriceRange) }}
+            <div class="summary-item" v-if="selectedPriceRange !== 'all'">
+              {{ getPriceDisplayName(selectedPriceRange) }}
             </div>
-            <div class="summary-item" v-if="tempYear !== null">
-              {{ getYearDisplayName(tempYear) }}年
+            <div class="summary-item" v-if="selectedYear !== null">
+              {{ getYearDisplayName(selectedYear) }}{{ $t('search.filters.year') }}
+            </div>
+            <div class="summary-item" v-if="selectedSeats !== 'all'">
+              {{ getSeatsDisplayName(selectedSeats) }}
             </div>
           </div>
         </div>
@@ -301,14 +380,14 @@
         <!-- 选项卡 -->
         <el-tabs v-model="activeTab" class="filter-tabs">
           <!-- 分类选项卡 -->
-          <el-tab-pane label="分类" name="category">
+          <el-tab-pane :label="$t('search.filters.category')" name="category">
             <div class="tab-content">
               <div class="filter-options-mobile">
                 <el-button
-                  :type="tempCategory === 'all' ? 'primary' : 'default'"
-                  @click="tempCategory = 'all'"
+                  :type="selectedCategory === 'all' ? 'primary' : 'default'"
+                  @click="handleMobileCategoryChange('all')"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempCategory === 'all' }"
+                  :class="{ 'is-selected': selectedCategory === 'all' }"
                 >
                   <el-icon><Grid /></el-icon>
                   {{ $t('search.filters.allVehicles') }}
@@ -316,10 +395,10 @@
                 <el-button
                   v-for="category in categories"
                   :key="category.value"
-                  :type="tempCategory === category.value ? 'primary' : 'default'"
-                  @click="tempCategory = category.value"
+                  :type="selectedCategory === category.value ? 'primary' : 'default'"
+                  @click="handleMobileCategoryChange(category.value)"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempCategory === category.value }"
+                  :class="{ 'is-selected': selectedCategory === category.value }"
                 >
                   <el-icon><component :is="category.icon" /></el-icon>
                   {{ category.label }}
@@ -329,24 +408,24 @@
           </el-tab-pane>
 
           <!-- 品牌选项卡 -->
-          <el-tab-pane label="品牌" name="brand">
+          <el-tab-pane :label="$t('search.filters.brand')" name="brand">
             <div class="tab-content">
               <div class="filter-options-mobile">
                 <el-button
-                  :type="tempBrand === '' ? 'primary' : 'default'"
-                  @click="tempBrand = ''"
+                  :type="selectedBrand === '' ? 'primary' : 'default'"
+                  @click="handleMobileBrandChange('')"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempBrand === '' }"
+                  :class="{ 'is-selected': selectedBrand === '' }"
                 >
-                  不限品牌
+                  {{ $t('search.filters.allVehicles') }}
                 </el-button>
                 <el-button
                   v-for="brand in brands"
                   :key="brand.brand"
-                  :type="tempBrand === brand.brand ? 'primary' : 'default'"
-                  @click="tempBrand = brand.brand"
+                  :type="selectedBrand === brand.brand ? 'primary' : 'default'"
+                  @click="handleMobileBrandChange(brand.brand)"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempBrand === brand.brand }"
+                  :class="{ 'is-selected': selectedBrand === brand.brand }"
                 >
                   {{ brand.brand }}
                 </el-button>
@@ -355,16 +434,16 @@
           </el-tab-pane>
 
           <!-- 价格选项卡 -->
-          <el-tab-pane label="价格" name="price">
+          <el-tab-pane :label="$t('search.filters.priceRangeTitle')" name="price">
             <div class="tab-content">
               <div class="filter-options-mobile">
                 <el-button
                   v-for="range in priceRanges"
                   :key="range.value"
-                  :type="tempPriceRange === range.value ? 'primary' : 'default'"
-                  @click="tempPriceRange = range.value"
+                  :type="selectedPriceRange === range.value ? 'primary' : 'default'"
+                  @click="handleMobilePriceRangeChange(range.value)"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempPriceRange === range.value }"
+                  :class="{ 'is-selected': selectedPriceRange === range.value }"
                 >
                   {{ range.label }}
                 </el-button>
@@ -373,26 +452,54 @@
           </el-tab-pane>
 
           <!-- 年份选项卡 -->
-          <el-tab-pane label="年份" name="year">
+          <el-tab-pane :label="$t('search.filters.year')" name="year">
             <div class="tab-content">
               <div class="filter-options-mobile">
                 <el-button
-                  :type="tempYear === null ? 'primary' : 'default'"
-                  @click="tempYear = null"
+                  :type="selectedYear === null ? 'primary' : 'default'"
+                  @click="handleMobileYearChange(null)"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempYear === null }"
+                  :class="{ 'is-selected': selectedYear === null }"
                 >
-                  不限年份
+                  {{ $t('search.filters.allVehicles') }}
                 </el-button>
                 <el-button
                   v-for="year in availableYears"
                   :key="year"
-                  :type="tempYear === year ? 'primary' : 'default'"
-                  @click="tempYear = year"
+                  :type="selectedYear === year ? 'primary' : 'default'"
+                  @click="handleMobileYearChange(year)"
                   class="filter-btn-mobile"
-                  :class="{ 'is-selected': tempYear === year }"
+                  :class="{ 'is-selected': selectedYear === year }"
                 >
                   {{ year }}
+                </el-button>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- 座位数选项卡 -->
+          <el-tab-pane label="座位数" name="seats">
+            <div class="tab-content">
+              <div class="filter-options-mobile">
+                <el-button
+                  :type="selectedSeats === 'all' ? 'primary' : 'default'"
+                  @click="handleMobileSeatsChange('all')"
+                  class="filter-btn-mobile"
+                  :class="{ 'is-selected': selectedSeats === 'all' }"
+                >
+                  <el-icon><UserIcon /></el-icon>
+                  {{ $t('search.filters.seats.all') }}
+                </el-button>
+                <el-button
+                  v-for="seat in seatOptions"
+                  :key="seat.value"
+                  :type="selectedSeats === seat.value ? 'primary' : 'default'"
+                  @click="handleMobileSeatsChange(seat.value)"
+                  class="filter-btn-mobile"
+                  :class="{ 'is-selected': selectedSeats === seat.value }"
+                >
+                  <el-icon><UserIcon /></el-icon>
+                  {{ seat.label }}
                 </el-button>
               </div>
             </div>
@@ -402,7 +509,7 @@
         <!-- 底部操作按钮 -->
         <div class="drawer-footer">
           <el-button @click="closeFilterDrawer">取消</el-button>
-          <el-button type="primary" @click="applyFilters">确定</el-button>
+                      <el-button type="primary" @click="applyFilters">确定</el-button>
         </div>
       </div>
     </el-drawer>
@@ -428,23 +535,22 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import AppHeader from '@/components/AppHeader.vue'
 import VehicleDetailDrawer from '@/components/VehicleDetailDrawer.vue'
-import { ArrowLeft, Search, Phone, Van, Box, Bicycle, Star, Grid, ArrowDown, Close } from '@element-plus/icons-vue'
+import { ArrowLeft, Search, Phone, Van, Box, Bicycle, Star, Grid, ArrowDown, Close, Loading } from '@element-plus/icons-vue'
 import { Calendar, Tickets, User as UserIcon, Cpu, Setting } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { useSearchStore } from '@/stores/search'
+
 import { vehicleAPI } from '@/utils/api'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
-const searchStore = useSearchStore()
-// 滚动恢复状态标记，避免恢复期间被其它逻辑打断
-const isRestoringScroll = ref(false)
+
+
 // 抽屉尺寸逻辑已移至 VehicleDetailDrawer 组件
 
 // 搜索关键词
-const searchKeyword = ref(route.query.q || '')
+const searchKeyword = ref(route.query.car_model || '')
 
 // 移动端检测
 const isMobile = ref(window.innerWidth <= 768)
@@ -472,24 +578,29 @@ const categoryMapping = {
 }
 
 // 筛选状态
-const selectedCategory = ref('all')
+const selectedCategory = ref('private') // 默认显示私家车
 const selectedBrand = ref('')
 const selectedPriceRange = ref('all')
 const selectedYear = ref(null)
+const selectedSeats = ref('all')
 
-// 移动端筛选抽屉状态
+// 筛选备份状态 - 用于取消时恢复
+const backupCategory = ref('private') // 默认显示私家车
+const backupBrand = ref('')
+const backupPriceRange = ref('all')
+const backupYear = ref(null)
+const backupSeats = ref('all')
+
+// 筛选抽屉状态
 const filterDrawerVisible = ref(false)
 const activeTab = ref('category') // 默认打开分类选项卡
-const tempCategory = ref('all') // 临时存储分类筛选值
-const tempBrand = ref('') // 临时存储品牌筛选值
-const tempPriceRange = ref('all') // 临时存储价格筛选值
-const tempYear = ref(null) // 临时存储年份筛选值
 
 // API相关状态
 const vehicles = ref([])
 const brands = ref([]) // 品牌列表
 const loading = ref(false)
 const loadingMore = ref(false) // 加载更多状态
+const isFetching = ref(false) // 防重复请求标志
 const pagination = ref({
   current_page: 1,
   total_pages: 1,
@@ -507,6 +618,13 @@ const availableYears = computed(() => {
   }
   return years
 })
+
+// 座位数选项
+const seatOptions = computed(() => [
+  { label: t('search.filters.seats.5'), value: '5' },
+  { label: t('search.filters.seats.6'), value: '6' },
+  { label: t('search.filters.seats.7'), value: '7' }
+])
 
 
 
@@ -527,30 +645,45 @@ const priceRanges = computed(() => [
 
 // 处理API返回的车辆数据，适配现有的卡片结构
 const processVehicleData = (vehicles) => {
-  return vehicles.map(vehicle => ({
-    id: vehicle.id,
-    vehicle_id: vehicle.vehicle_id, // 使用API返回的vehicle_id字段
-    name: `${vehicle.car_brand} ${vehicle.car_model}`,
-    year: vehicle.year,
-    fuelType: vehicle.fuel_type,
-    seats: vehicle.seats,
-    price: vehicle.price,
-    currentPrice: vehicle.current_price,
-    originalPrice: vehicle.original_price, // 添加原价字段
-    // 选择第一张图片（避免随机选择导致的重复计算）
-    image: vehicle.images && vehicle.images.length > 0 
-      ? vehicle.images[0].image_url 
-      : null, // 先设置为null，在模板中处理默认图片
-    // 联系人信息
-    contactName: vehicle.contact_name || '暂无联系人',
-    phoneNumber: vehicle.phone_number || '暂无电话',
-    category: vehicle.vehicle_type,
-    badge: getVehicleStatusBadge(vehicle.vehicle_status),
-    // 额外信息
-    transmission: vehicle.transmission,
-    engineVolume: vehicle.engine_volume,
-    description: vehicle.description
-  }))
+  if (!Array.isArray(vehicles)) {
+    console.warn('processVehicleData: vehicles不是数组', vehicles)
+    return []
+  }
+  
+  return vehicles.map(vehicle => {
+    // 验证必要字段
+    if (!vehicle || typeof vehicle !== 'object') {
+      console.warn('processVehicleData: 无效的车辆数据', vehicle)
+      return null
+    }
+    
+    return {
+      id: vehicle.id || vehicle.vehicle_id || '',
+      vehicle_id: vehicle.vehicle_id || vehicle.id || '',
+      name: vehicle.car_brand && vehicle.car_model 
+        ? `${vehicle.car_brand} ${vehicle.car_model}`
+        : vehicle.name || '未知車型',
+      year: vehicle.year || '',
+      fuelType: vehicle.fuel_type || '',
+      seats: vehicle.seats || '',
+      price: vehicle.price || '',
+      currentPrice: vehicle.current_price || vehicle.price || '',
+      originalPrice: vehicle.original_price || '',
+      // 选择第一张图片（避免随机选择导致的重复计算）
+      image: vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
+        ? vehicle.images[0].image_url || vehicle.images[0]
+        : null,
+      // 联系人信息
+      contactName: vehicle.contact_name || '暫無聯繫人',
+      phoneNumber: vehicle.phone_number || '暫無電話',
+      category: vehicle.vehicle_type || '',
+      badge: getVehicleStatusBadge(vehicle.vehicle_status),
+      // 额外信息
+      transmission: vehicle.transmission || '',
+      engineVolume: vehicle.engine_volume || '',
+      description: vehicle.description || ''
+    }
+  }).filter(Boolean) // 过滤掉无效数据
 }
 
 // 获取车辆状态徽章
@@ -566,7 +699,7 @@ const getVehicleStatusBadge = (status) => {
 
 // 格式化价格显示
 const formatPrice = (currentPrice, originalPrice) => {
-  if (!currentPrice || currentPrice === '0.00') return '价格面议'
+  if (!currentPrice || currentPrice === '0.00') return '價格面議'
   
   // 默认显示现价
   const formattedCurrentPrice = `HKD$${parseFloat(currentPrice).toLocaleString()}`
@@ -588,14 +721,37 @@ const formatPrice = (currentPrice, originalPrice) => {
   }
 }
 
+// 价格格式化缓存
+const priceCache = new Map()
+const MAX_CACHE_SIZE = 200 // 增加缓存大小
+
 // 获取格式化的价格信息（优化性能，避免重复调用）
 const getFormattedPrice = (car) => {
-  return formatPrice(car.currentPrice, car.originalPrice)
+  // 生成缓存键
+  const cacheKey = `${car.currentPrice}_${car.originalPrice}`
+  
+  // 检查缓存
+  if (priceCache.has(cacheKey)) {
+    return priceCache.get(cacheKey)
+  }
+  
+  // 计算价格
+  const formattedPrice = formatPrice(car.currentPrice, car.originalPrice)
+  
+  // 缓存结果（限制缓存大小，避免内存泄漏）
+  if (priceCache.size > MAX_CACHE_SIZE) {
+    // 清除最早的缓存项
+    const firstKey = priceCache.keys().next().value
+    priceCache.delete(firstKey)
+  }
+  
+  priceCache.set(cacheKey, formattedPrice)
+  return formattedPrice
 }
 
 // 详情抽屉内价格展示专用（防止出现对象字符串化）
 const formatCurrencyHKD = (value) => {
-  if (!value || Number(value) === 0) return '价格面议'
+  if (!value || Number(value) === 0) return '價格面議'
   return `HKD$${Number(value).toLocaleString()}`
 }
 
@@ -641,10 +797,11 @@ const filteredCars = computed(() => {
 
 // 检查是否有已选择的筛选条件
 const hasSelectedFilters = computed(() => {
-  return tempCategory.value !== 'all' || 
-         tempBrand.value !== '' ||
-         tempPriceRange.value !== 'all' || 
-         tempYear.value !== null
+  return selectedCategory.value !== 'all' || 
+         selectedBrand.value !== '' ||
+         selectedPriceRange.value !== 'all' || 
+         selectedYear.value !== null ||
+         selectedSeats.value !== 'all'
 })
 
 // 详情抽屉相关状态
@@ -655,35 +812,66 @@ const detailData = ref(null)
 const detailImageIndex = ref(0)
 const currentDetailId = ref(null)
 
+// 判断是否为指定用户（mingge）
+const isMinggeUser = computed(() => {
+  // 确保用户状态已完全初始化
+  if (!userStore.isInitialized || userStore.isInitializing) {
+    return false
+  }
+  return userStore.isLoggedIn && userStore.userInfo?.username === 'mingge'
+})
+
 // 处理车辆点击
 function handleCarClick(car) {
-  console.log('点击车辆:', car)
-  // 进入详情前保存当前滚动位置
-  saveScrollPosition()
-  // 在抽屉中展示车辆详情
-  openDetailDrawer(car.vehicle_id)
-}
-
-// 打开详情抽屉
-const openDetailDrawer = async (vehicleId) => {
-  console.log('🚗 开始加载车辆详情，ID:', vehicleId)
+  // 立即显示抽屉，提供即时反馈
   detailDrawerVisible.value = true
   detailLoading.value = true
   detailError.value = false
   detailData.value = null
   detailImageIndex.value = 0
-  currentDetailId.value = vehicleId
+  currentDetailId.value = car.vehicle_id
+  
+  // 预填充基本信息（从列表数据中获取）
+  detailData.value = {
+    id: car.id,
+    vehicle_id: car.vehicle_id,
+    brand: car.car_brand || '',
+    model: car.car_model || '',
+    vehicle_type: car.vehicle_type || '',
+    fuel_type: car.fuelType || '',
+    seats: car.seats || '',
+    year: car.year || '',
+    current_price: car.currentPrice,
+    original_price: car.originalPrice,
+    contact_name: car.contactName || '明哥',
+    phone_number: car.phoneNumber || '98702065',
+    images: car.image ? [car.image] : [],
+    // 标记为预填充数据，需要后续更新
+    _isPreloaded: true
+  }
+  
+  // 异步加载完整数据
+  loadFullDetailData(car.vehicle_id)
+  
+  // 清除点击状态（300ms后）
+  setTimeout(() => {
+    currentDetailId.value = null
+  }, 300)
+}
+
+// 加载完整详情数据
+async function loadFullDetailData(vehicleId, retryCount = 0) {
   try {
-    console.log('📡 调用API获取车辆详情...')
     // 兼容不同返回结构
     const res = await vehicleAPI.getVehicleDetail(vehicleId)
-    console.log('✅ API响应原始数据:', res)
     
     const rawData = res?.vehicle || res
-    console.log('🔄 提取的原始数据:', rawData)
     
     // 数据格式转换，适配VehicleDetailDrawer组件
     if (rawData) {
+      // 根据用户权限和车辆类型过滤价格信息
+      const isSpecialOffer = rawData.is_special_offer === 1
+      
       const transformedData = {
         id: rawData.id,
         vehicle_id: rawData.vehicle_id,
@@ -694,27 +882,100 @@ const openDetailDrawer = async (vehicleId) => {
         seats: rawData.seats,
         year: rawData.year,
         description: rawData.description,
-        current_price: rawData.current_price,
-        original_price: rawData.original_price,
-        contact_phone: rawData.phone_number || rawData.contact_phone,
+        // 根据用户权限和特价标识过滤价格信息
+        current_price: isMinggeUser.value ? rawData.current_price : (isSpecialOffer ? 98000 : rawData.current_price),
+        original_price: isMinggeUser.value ? rawData.original_price : (isSpecialOffer ? null : rawData.original_price),
+        // 根据用户权限过滤联系信息
+        contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
+        phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
+        contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
         images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
       }
-      console.log('🎯 转换后的数据:', transformedData)
       // 使用JSON深拷贝避免响应式问题
       detailData.value = JSON.parse(JSON.stringify(transformedData))
       // 确保清除错误状态
       detailError.value = false
-      console.log('✨ 详情数据设置完成，抽屉应该显示数据:', detailData.value)
     } else {
-      console.warn('⚠️ 没有获取到有效的车辆数据')
       detailError.value = '没有获取到车辆数据'
     }
   } catch (e) {
-    console.error('❌ 加载车辆详情失败:', e)
-    detailError.value = e?.message || '加载失败'
+    // 重试机制：最多重试1次，间隔1秒
+    if (retryCount < 1) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId)
+        loadFullDetailData(vehicleId, retryCount + 1)
+      }, 1000)
+      activeTimeouts.add(timeoutId)
+      return
+    }
+    
+    // 重试次数用完，显示错误信息
+    detailError.value = e?.message || '加載失敗，請檢查網絡連接後重試'
   } finally {
     detailLoading.value = false
-    console.log('🏁 详情加载完成，loading状态:', detailLoading.value, '错误状态:', detailError.value)
+  }
+}
+
+// 打开详情抽屉（带重试机制）- 保留原有方法以兼容其他调用
+async function openDetailDrawer(vehicleId, retryCount = 0) {
+  detailDrawerVisible.value = true
+  detailLoading.value = true
+  detailError.value = false
+  detailData.value = null
+  detailImageIndex.value = 0
+  currentDetailId.value = vehicleId
+  try {
+    // 兼容不同返回结构
+    const res = await vehicleAPI.getVehicleDetail(vehicleId)
+    
+    const rawData = res?.vehicle || res
+    
+    // 数据格式转换，适配VehicleDetailDrawer组件
+    if (rawData) {
+      // 根据用户权限和车辆类型过滤价格信息
+      const isSpecialOffer = rawData.is_special_offer === 1
+      
+      const transformedData = {
+        id: rawData.id,
+        vehicle_id: rawData.vehicle_id,
+        brand: rawData.car_brand || rawData.brand,
+        model: rawData.car_model || rawData.model,
+        vehicle_type: rawData.vehicle_type_text || rawData.car_category || rawData.vehicle_type,
+        fuel_type: rawData.fuel_type,
+        seats: rawData.seats,
+        year: rawData.year,
+        description: rawData.description,
+        // 根据用户权限和特价标识过滤价格信息
+        current_price: isMinggeUser.value ? rawData.current_price : (isSpecialOffer ? 98000 : rawData.current_price),
+        original_price: isMinggeUser.value ? rawData.original_price : (isSpecialOffer ? null : rawData.original_price),
+        // 根据用户权限过滤联系信息
+        contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
+        phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
+        contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
+        images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
+      }
+      // 使用JSON深拷贝避免响应式问题
+      detailData.value = JSON.parse(JSON.stringify(transformedData))
+      // 确保清除错误状态
+      detailError.value = false
+    } else {
+      detailError.value = '没有获取到车辆数据'
+    }
+  } catch (e) {
+    // 重试机制：最多重试1次，间隔1秒
+    if (retryCount < 1) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId)
+        openDetailDrawer(vehicleId, retryCount + 1)
+      }, 1000)
+      activeTimeouts.add(timeoutId)
+      return
+    }
+    
+    // 重试次数用完，显示错误信息
+    detailError.value = e?.message || '加載失敗，請檢查網絡連接後重試'
+  } finally {
+    detailLoading.value = false
   }
 }
 
@@ -726,17 +987,22 @@ const reloadDetail = () => {
 // 获取品牌列表
 const fetchBrands = async () => {
   try {
-    const response = await vehicleAPI.getBrands()
-    brands.value = response.brands || []
-    // console.log('品牌列表获取成功:', brands.value)
+    // 直接使用写死的品牌列表，避免API调用失败
+    brands.value = brandsList
   } catch (error) {
     console.error('获取品牌列表失败:', error)
-    ElMessage.error('获取品牌列表失败，请稍后重试')
+    // 即使失败也使用默认品牌列表，确保功能正常
+    brands.value = brandsList
   }
 }
 
-// 获取车辆数据（支持分页）
-const fetchVehicles = async (isLoadMore = false) => {
+// 获取车辆数据（支持分页，带重试机制）
+const fetchVehicles = async (isLoadMore = false, retryCount = 0) => {
+  // 防重复请求
+  if (isFetching.value && !isLoadMore) {
+    return
+  }
+  
   if (isLoadMore) {
     // 加载更多时，检查是否还有下一页
     if (!pagination.value.has_next) {
@@ -744,45 +1010,37 @@ const fetchVehicles = async (isLoadMore = false) => {
     }
     loadingMore.value = true
   } else {
-    // 首次加载时，先检查缓存
-    const searchParams = {
-      category: selectedCategory.value,
-      brand: selectedBrand.value,
-      priceRange: selectedPriceRange.value,
-      year: selectedYear.value,
-      keyword: searchKeyword.value
-    }
-    
-    const cachedResult = searchStore.getCachedSearchResult(searchParams)
-    if (cachedResult) {
-      console.log('使用缓存数据:', searchStore.currentCacheKey)
-      vehicles.value = cachedResult.vehicles
-      pagination.value = cachedResult.pagination
-      // currentCacheKey已经在getCachedSearchResult中设置了
-      return
-    }
-    
     loading.value = true
+    isFetching.value = true
     // 重置分页状态
     pagination.value.current_page = 1
+    // 清空预加载数据
+    preloadedData.value = null
   }
   
   try {
     const params = {
       page: isLoadMore ? pagination.value.current_page + 1 : 1,
-      limit: 20
+      limit: 20,
+      sort_by: 'year',
+      sort_order: 'DESC',
+      vehicle_type: 1 // 默认只显示私家车
     }
     
-    // 如果选择了分类，添加vehicle_type参数
+    // 如果选择了分类，覆盖默认的vehicle_type参数
     if (selectedCategory.value && selectedCategory.value !== 'all') {
       const typeId = categoryMapping[selectedCategory.value]
       if (typeId) {
         params.vehicle_type = typeId
       }
+    } else if (selectedCategory.value === 'all') {
+      // 用户选择了"全部车辆"，删除vehicle_type参数以显示所有类型
+      delete params.vehicle_type
     }
     
     // 如果选择了品牌，添加car_brand参数
     if (selectedBrand.value && selectedBrand.value !== '') {
+      // 使用完整品牌名作为API参数，确保搜索准确性
       params.car_brand = selectedBrand.value
     }
     
@@ -800,150 +1058,127 @@ const fetchVehicles = async (isLoadMore = false) => {
       params.year = selectedYear.value
     }
     
+    // 如果选择了座位数，添加seats参数
+    if (selectedSeats.value && selectedSeats.value !== 'all') {
+      params.seats = selectedSeats.value
+    }
+    
+    // 如果有搜索关键词，作为车型模糊搜索
+    if (searchKeyword.value && searchKeyword.value.trim() !== '') {
+      // 无论是否选择了品牌，都将搜索关键词作为车型参数传递
+      params.car_model = searchKeyword.value.trim()
+    }
+    
     const response = await vehicleAPI.getVehicles(params)
-    console.log('API响应:', response)
     
     if (isLoadMore) {
       // 加载更多时，追加数据
       vehicles.value = [...vehicles.value, ...processVehicleData(response.vehicles)]
-      console.log('加载更多完成，当前车辆数量:', vehicles.value.length)
     } else {
       // 首次加载或筛选时，替换数据
       vehicles.value = processVehicleData(response.vehicles)
-      console.log('首次加载完成，车辆数量:', vehicles.value.length)
     }
     
     // 更新分页状态
     pagination.value = response.pagination
     // 保存到缓存（仅在首次加载时）
     if (!isLoadMore) {
-      const searchParams = {
-        category: selectedCategory.value,
-        brand: selectedBrand.value,
-        priceRange: selectedPriceRange.value,
-        year: selectedYear.value,
-        keyword: searchKeyword.value
-      }
-      
-      searchStore.saveSearchCache(searchParams, {
-        vehicles: vehicles.value,
-        pagination: pagination.value
-      })
+
     }
   } catch (error) {
-    console.error('获取车辆失败:', error)
-    ElMessage.error('获取车辆数据失败，请稍后重试')
+    // 重试机制：最多重试2次，每次间隔1秒
+    if (retryCount < 2) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId)
+        fetchVehicles(isLoadMore, retryCount + 1)
+      }, 1000)
+      activeTimeouts.add(timeoutId)
+      return
+    }
+    
+    // 重试次数用完，显示错误消息
+    ElMessage.error('獲取車輛數據失敗，請檢查網絡連接後重試')
+    
+    // 如果是首次加载失败，显示空状态
+    if (!isLoadMore && vehicles.value.length === 0) {
+      vehicles.value = []
+      pagination.value = {
+        current_page: 1,
+        total_pages: 1,
+        total_count: 0,
+        limit: 20,
+        has_next: false,
+        has_prev: false
+      }
+    }
   } finally {
     loading.value = false
     loadingMore.value = false
+    isFetching.value = false
   }
+}
+
+// 通用的筛选处理函数
+const handleFilterChange = (filterType, value) => {
+  // 清空搜索框内容
+  searchKeyword.value = ''
+  
+  // 更新对应的筛选条件
+  switch (filterType) {
+    case 'category':
+      // 如果点击的是当前已选中的分类，不做任何操作
+      if (selectedCategory.value === value) {
+        return
+      }
+      selectedCategory.value = value
+      break
+    case 'brand':
+      selectedBrand.value = value
+      break
+    case 'priceRange':
+      selectedPriceRange.value = value
+      break
+    case 'year':
+      selectedYear.value = value
+      break
+    case 'seats':
+      selectedSeats.value = value
+      break
+  }
+  
+  // 清空预加载数据
+  preloadedData.value = null
+  
+  // 重置分页和数据
+  resetPaginationAndData()
+  
+  // 更新路由（路由监听器会自动调用fetchVehicles）
+  updateRoute()
 }
 
 // 选择分类
 const selectCategory = (category) => {
-  // 如果点击的是当前已选中的分类，不做任何操作
-  if (selectedCategory.value === category) {
-    return
-  }
-  
-  // 更新选中的分类
-  selectedCategory.value = category
-  
-  // 重置分页状态
-  pagination.value = {
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0,
-    limit: 20,
-    has_next: false,
-    has_prev: false
-  }
-  
-  // 清空现有数据
-  vehicles.value = []
-  
-  // 调用API获取数据
-  fetchVehicles()
-  
-  // 更新路由
-  updateRoute()
+  handleFilterChange('category', category)
 }
 
 // 选择品牌
 const selectBrand = (brand) => {
-  // 更新选中的品牌
-  selectedBrand.value = brand
-  
-  // 重置分页状态
-  pagination.value = {
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0,
-    limit: 20,
-    has_next: false,
-    has_prev: false
-  }
-  
-  // 清空现有数据
-  vehicles.value = []
-  
-  // 调用API获取数据
-  fetchVehicles()
-  
-  // 更新路由
-  updateRoute()
+  handleFilterChange('brand', brand)
 }
 
 // 选择价格区间
 const selectPriceRange = (priceRange) => {
-  
-  // 更新选中的价格区间
-  selectedPriceRange.value = priceRange
-  
-  // 重置分页状态
-  pagination.value = {
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0,
-    limit: 20,
-    has_next: false,
-    has_prev: false
-  }
-  
-  // 清空现有数据
-  vehicles.value = []
-  
-  // 调用API获取数据
-  fetchVehicles()
-  
-  // 更新路由
-  updateRoute()
+  handleFilterChange('priceRange', priceRange)
 }
 
 // 选择年份
 const selectYear = (year) => {
-  
-  // 更新选中的年份
-  selectedYear.value = year
-  
-  // 重置分页状态
-  pagination.value = {
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0,
-    limit: 20,
-    has_next: false,
-    has_prev: false
-  }
-  
-  // 清空现有数据
-  vehicles.value = []
-  
-  // 调用API获取数据
-  fetchVehicles()
-  
-  // 更新路由
-  updateRoute()
+  handleFilterChange('year', year)
+}
+
+// 选择座位数
+const selectSeats = (seats) => {
+  handleFilterChange('seats', seats)
 }
 
 // 获取价格范围对应的数字参数
@@ -976,69 +1211,433 @@ const getPriceRangeParams = (priceRange) => {
 
 // 重置筛选
 function resetFilters() {
-  selectedCategory.value = 'all'
-  selectedBrand.value = ''
-  selectedPriceRange.value = 'all'
-  selectedYear.value = null
+  // 强制关闭筛选抽屉（如果打开的话）
+  filterDrawerVisible.value = false
+  
+  // 清空预加载数据
+  preloadedData.value = null
+  
+  resetPaginationAndData()
+  
+  // 更新路由（重置为显示全部车辆），路由监听器会自动同步筛选条件并获取数据
+  router.push({ query: { category: 'all' } })
+}
+
+// 通用的清除筛选条件函数
+const handleClearFilter = (filterType) => {
+  // 清空搜索框内容
   searchKeyword.value = ''
   
-  // 重新获取所有车辆数据
-  fetchVehicles()
+  // 重置对应的筛选条件
+  switch (filterType) {
+    case 'category':
+      selectedCategory.value = 'all'
+      break
+    case 'brand':
+      selectedBrand.value = ''
+      break
+    case 'priceRange':
+      selectedPriceRange.value = 'all'
+      break
+    case 'year':
+      selectedYear.value = null
+      break
+    case 'seats':
+      selectedSeats.value = 'all'
+      break
+  }
   
+  // 清空预加载数据
+  preloadedData.value = null
+  
+  // 更新路由，路由监听器会自动获取数据
   updateRoute()
+}
+
+// 清除单个筛选条件
+const clearCategory = () => {
+  handleClearFilter('category')
+}
+
+const clearBrand = () => {
+  handleClearFilter('brand')
+}
+
+const clearPriceRange = () => {
+  handleClearFilter('priceRange')
+}
+
+const clearYear = () => {
+  handleClearFilter('year')
+}
+
+const clearSeats = () => {
+  handleClearFilter('seats')
+}
+
+
+
+// 通用的重置分页和数据函数
+const resetPaginationAndData = () => {
+  // 重置分页状态
+  pagination.value = {
+    current_page: 1,
+    total_pages: 1,
+    total_count: 0,
+    limit: 20,
+    has_next: false,
+    has_prev: false
+  }
+  
+  // 清空现有数据
+  vehicles.value = []
 }
 
 // 执行搜索
 const doSearch = () => {
+  // 清空预加载数据
+  preloadedData.value = null
+  
+  resetPaginationAndData()
+  
+  // 更新路由，路由监听器会自动获取数据
   updateRoute()
+}
+
+// 品牌映射表（完整品牌名 → URL英文标识）
+const brandMapping = {
+  '豐田 TOYOTA': 'toyota',
+  '平治 MERCEDES-BENZ': 'mercedes-benz',
+  '本田 HONDA': 'honda',
+  '寶馬 BMW': 'bmw',
+  '保時捷 PORSCHE': 'porsche',
+  '奧迪 AUDI': 'audi',
+  '日產 NISSAN': 'nissan',
+  '特斯拉 TESLA': 'tesla',
+  '凌志 LEXUS': 'lexus',
+  '五十鈴 ISUZU': 'isuzu',
+  '福士 VOLKSWAGEN': 'volkswagen',
+  '越野路華 LAND ROVER': 'land-rover',
+  '鈴木 SUZUKI': 'suzuki',
+  '富士 SUBARU': 'subaru',
+  '萬事得 MAZDA': 'mazda',
+  '三菱 MITSUBISHI': 'mitsubishi',
+  '起亞 KIA': 'kia',
+  '法拉利 FERRARI': 'ferrari',
+  '迷你 MINI': 'mini',
+  '現代 HYUNDAI': 'hyundai',
+  '福特 FORD': 'ford',
+  '賓利 BENTLEY': 'bentley',
+  '富豪 VOLVO': 'volvo',
+  '日野 HINO': 'hino',
+  '林寶堅尼 LAMBORGHINI': 'lamborghini',
+  '瑪莎拉蒂 MASERATI': 'maserati',
+  '勞斯萊斯 ROLLS ROYCE': 'rolls-royce',
+  '麥拿倫 MCLAREN': 'mclaren',
+  '積架 JAGUAR': 'jaguar',
+  '標緻 PEUGEOT': 'peugeot',
+  '比亞迪 BYD': 'byd',
+  '阿士頓馬田 ASTON MARTIN': 'aston-martin',
+  '蓮花 LOTUS': 'lotus',
+  '大發 DAIHATSU': 'daihatsu',
+  '愛快 ALFAROMEO': 'alfaromeo',
+  '雷諾 RENAULT': 'renault',
+  '東風 DONGFENG': 'dongfeng',
+  '路華 ROVER': 'rover',
+  '先進 CITROEN': 'citroen',
+  '雙龍 SSANGYONG': 'ssangyong',
+  '快意 FIAT': 'fiat',
+  '福田 FOTON': 'foton',
+  '江淮 JAC': 'jac',
+  '大實力 UD': 'ud',
+  '猛獅 MAN': 'man',
+  '中國重汽 SINOTRUK': 'sinotruk',
+  '歐寶 OPEL': 'opel',
+  '紳寶 SAAB': 'saab',
+  'MAXUS': 'maxus',
+  'SMART': 'smart',
+  'INFINITI': 'infiniti',
+  'JEEP': 'jeep',
+  'MG': 'mg',
+  'SCANIA': 'scania',
+  '任何 ANY': 'any'
+}
+
+// 品牌列表数据（用于前端渲染）
+const brandsList = [
+  { brand: "豐田 TOYOTA", count: 4389, label: "豐田 TOYOTA" },
+  { brand: "平治 MERCEDES-BENZ", count: 1864, label: "平治 MERCEDES-BENZ" },
+  { brand: "本田 HONDA", count: 1673, label: "本田 HONDA" },
+  { brand: "寶馬 BMW", count: 1412, label: "寶馬 BMW" },
+  { brand: "保時捷 PORSCHE", count: 770, label: "保時捷 PORSCHE" },
+  { brand: "奧迪 AUDI", count: 505, label: "奧迪 AUDI" },
+  { brand: "日產 NISSAN", count: 496, label: "日產 NISSAN" },
+  { brand: "特斯拉 TESLA", count: 465, label: "特斯拉 TESLA" },
+  { brand: "任何 ANY", count: 444, label: "任何 ANY" },
+  { brand: "凌志 LEXUS", count: 375, label: "凌志 LEXUS" },
+  { brand: "五十鈴 ISUZU", count: 372, label: "五十鈴 ISUZU" },
+  { brand: "福士 VOLKSWAGEN", count: 302, label: "福士 VOLKSWAGEN" },
+  { brand: "越野路華 LAND ROVER", count: 265, label: "越野路華 LAND ROVER" },
+  { brand: "鈴木 SUZUKI", count: 262, label: "鈴木 SUZUKI" },
+  { brand: "富士 SUBARU", count: 248, label: "富士 SUBARU" },
+  { brand: "萬事得 MAZDA", count: 232, label: "萬事得 MAZDA" },
+  { brand: "三菱 MITSUBISHI", count: 230, label: "三菱 MITSUBISHI" },
+  { brand: "起亞 KIA", count: 229, label: "起亞 KIA" },
+  { brand: "法拉利 FERRARI", count: 203, label: "法拉利 FERRARI" },
+  { brand: "迷你 MINI", count: 182, label: "迷你 MINI" },
+  { brand: "現代 HYUNDAI", count: 174, label: "現代 HYUNDAI" },
+  { brand: "福特 FORD", count: 131, label: "福特 FORD" },
+  { brand: "賓利 BENTLEY", count: 114, label: "賓利 BENTLEY" },
+  { brand: "富豪 VOLVO", count: 112, label: "富豪 VOLVO" },
+  { brand: "日野 HINO", count: 99, label: "日野 HINO" },
+  { brand: "林寶堅尼 LAMBORGHINI", count: 96, label: "林寶堅尼 LAMBORGHINI" },
+  { brand: "瑪莎拉蒂 MASERATI", count: 95, label: "瑪莎拉蒂 MASERATI" },
+  { brand: "勞斯萊斯 ROLLS ROYCE", count: 69, label: "勞斯萊斯 ROLLS ROYCE" },
+  { brand: "麥拿倫 MCLAREN", count: 69, label: "麥拿倫 MCLAREN" },
+  { brand: "積架 JAGUAR", count: 54, label: "積架 JAGUAR" },
+  { brand: "標緻 PEUGEOT", count: 48, label: "標緻 PEUGEOT" },
+  { brand: "比亞迪 BYD", count: 42, label: "比亞迪 BYD" },
+  { brand: "阿士頓馬田 ASTON MARTIN", count: 39, label: "阿士頓馬田 ASTON MARTIN" },
+  { brand: "MAXUS", count: 37, label: "MAXUS" },
+  { brand: "蓮花 LOTUS", count: 35, label: "蓮花 LOTUS" },
+  { brand: "SMART", count: 34, label: "SMART" },
+  { brand: "大發 DAIHATSU", count: 31, label: "大發 DAIHATSU" },
+  { brand: "愛快 ALFAROMEO", count: 31, label: "愛快 ALFAROMEO" },
+  { brand: "雷諾 RENAULT", count: 29, label: "雷諾 RENAULT" },
+  { brand: "INFINITI", count: 26, label: "INFINITI" },
+  { brand: "JEEP", count: 26, label: "JEEP" },
+  { brand: "東風 DONGFENG", count: 23, label: "東風 DONGFENG" },
+  { brand: "路華 ROVER", count: 20, label: "路華 ROVER" },
+  { brand: "先進 CITROEN", count: 19, label: "先進 CITROEN" },
+  { brand: "雙龍 SSANGYONG", count: 19, label: "雙龍 SSANGYONG" },
+  { brand: "MG", count: 17, label: "MG" },
+  { brand: "快意 FIAT", count: 17, label: "快意 FIAT" },
+  { brand: "SCANIA", count: 14, label: "SCANIA" },
+  { brand: "福田 FOTON", count: 8, label: "福田 FOTON" },
+  { brand: "江淮 JAC", count: 7, label: "江淮 JAC" },
+  { brand: "大實力 UD", count: 6, label: "大實力 UD" },
+  { brand: "猛獅 MAN", count: 5, label: "猛獅 MAN" },
+  { brand: "中國重汽 SINOTRUK", count: 3, label: "中國重汽 SINOTRUK" },
+  { brand: "歐寶 OPEL", count: 1, label: "歐寶 OPEL" },
+  { brand: "紳寶 SAAB", count: 1, label: "紳寶 SAAB" }
+]
+
+// 反向映射函数（URL英文标识 → 完整品牌名）
+const getBrandFromUrl = (urlBrand) => {
+  // 查找对应的完整品牌名
+  for (const [key, value] of Object.entries(brandMapping)) {
+    if (value === urlBrand.toLowerCase()) {
+      return key
+    }
+  }
+  // 如果没找到，返回原值
+  return urlBrand
+}
+
+// 正向映射函数（完整品牌名 → URL英文标识）
+const getBrandParam = (fullBrandName) => {
+  return brandMapping[fullBrandName] || fullBrandName
 }
 
 // 更新路由
 function updateRoute() {
   const query = {}
-  if (searchKeyword.value) query.keyword = searchKeyword.value
+  if (searchKeyword.value) query.car_model = searchKeyword.value
   if (selectedCategory.value && selectedCategory.value !== 'all') query.category = selectedCategory.value
-  if (selectedBrand.value && selectedBrand.value !== '') query.brand = selectedBrand.value
+  if (selectedBrand.value && selectedBrand.value !== '') {
+    // 使用英文标识作为URL参数，避免中文编码问题
+    query.brand = getBrandParam(selectedBrand.value)
+  }
   if (selectedPriceRange.value && selectedPriceRange.value !== 'all') query.priceRange = selectedPriceRange.value
   if (selectedYear.value) query.year = selectedYear.value
+  if (selectedSeats.value && selectedSeats.value !== 'all') query.seats = selectedSeats.value
   
   router.push({ query })
 }
 
-// 滚动监听器 - 实现无限滚动（带节流）
+// 滚动监听器 - 实现无限滚动（带节流和性能优化）
 let scrollTimeout = null
-// 滚动位置相关变量已移除
+let lastScrollTop = 0
+let scrollDirection = 'down'
+
+// 定时器管理
+let activeTimeouts = new Set()
+
+// 缓存DOM元素引用，避免重复查询
+let cachedCarsContainer = null
+let cachedSearchContent = null
+let lastWindowWidth = window.innerWidth
+
+// 获取缓存的DOM元素
+const getCachedElements = () => {
+  if (lastWindowWidth !== window.innerWidth) {
+    // 窗口大小变化时，清除缓存
+    cachedCarsContainer = null
+    cachedSearchContent = null
+    lastWindowWidth = window.innerWidth
+  }
+  
+  if (!cachedCarsContainer) {
+    cachedCarsContainer = document.querySelector('.cars-container')
+  }
+  if (!cachedSearchContent) {
+    cachedSearchContent = document.querySelector('.search-content')
+  }
+  
+  return { carsContainer: cachedCarsContainer, searchContent: cachedSearchContent }
+}
+
+// 获取滚动位置（优化版本）
+const getScrollPosition = () => {
+  if (window.innerWidth <= 768) {
+    // 移动端：使用 window 滚动
+    return {
+      scrollTop: window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0,
+      scrollHeight: document.documentElement.scrollHeight || document.body.scrollHeight || 0,
+      clientHeight: window.innerHeight || document.documentElement.clientHeight || 0
+    }
+  } else {
+    // 桌面端：检查实际的滚动容器
+    const { carsContainer, searchContent } = getCachedElements()
+    
+    if (carsContainer && carsContainer.scrollHeight > carsContainer.clientHeight) {
+      return {
+        scrollTop: carsContainer.scrollTop,
+        scrollHeight: carsContainer.scrollHeight,
+        clientHeight: carsContainer.clientHeight
+      }
+    } else if (searchContent && searchContent.scrollHeight > searchContent.clientHeight) {
+      return {
+        scrollTop: searchContent.scrollTop,
+        scrollHeight: searchContent.scrollHeight,
+        clientHeight: searchContent.clientHeight
+      }
+    } else {
+      // 回退到 window 滚动
+      return {
+        scrollTop: window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0,
+        scrollHeight: document.documentElement.scrollHeight || document.body.scrollHeight || 0,
+        clientHeight: window.innerHeight || document.documentElement.clientHeight || 0
+      }
+    }
+  }
+}
 
 const handleScroll = (event) => {
   // 如果正在加载或没有数据，跳过处理
-  if (loadingMore.value || vehicles.value.length === 0) {
+  if (loadingMore.value || vehicles.value.length === 0 || !pagination.value.has_next) {
     return
   }
   
-  // 滚动位置保存逻辑已移除
+  // 获取当前滚动位置
+  const { scrollTop: currentScrollTop } = getScrollPosition()
   
-  // 节流处理，避免频繁触发
+  // 判断滚动方向，只在下滚时触发加载
+  scrollDirection = currentScrollTop > lastScrollTop ? 'down' : 'up'
+  lastScrollTop = currentScrollTop
+  
+  // 如果向上滚动，不触发加载
+  if (scrollDirection === 'up') {
+    return
+  }
+  
+  // 节流处理，避免频繁触发（移动端使用更长的节流时间）
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
   }
   
+  const throttleTime = window.innerWidth <= 768 ? 200 : 150 // 移动端增加节流时间
+  
   scrollTimeout = setTimeout(() => {
     // 再次检查状态，防止在节流期间状态发生变化
-    if (loadingMore.value || vehicles.value.length === 0) {
+    if (loadingMore.value || vehicles.value.length === 0 || !pagination.value.has_next) {
       return
     }
     
-    // 统一使用 window 滚动检测，避免移动端和桌面端的差异
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
-    const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0
-    const clientHeight = window.innerHeight || document.documentElement.clientHeight || 0
+    const { scrollTop, scrollHeight, clientHeight } = getScrollPosition()
     
-    // 当距离底部150px时触发加载更多（移动端增加触发距离）
-    const triggerDistance = window.innerWidth <= 1200 ? 150 : 100
+    // 当距离底部一定距离时触发加载更多，PC端增加触发距离提前加载
+    const triggerDistance = window.innerWidth <= 768 ? 200 : 400
+    
     if (scrollTop + clientHeight >= scrollHeight - triggerDistance) {
       loadMore()
     }
-  }, 300) // 增加到300ms节流，进一步减少触发频率
+  }, throttleTime)
+}
+
+// 预加载状态
+const preloadingNextPage = ref(false)
+const preloadedData = ref(null)
+
+// 预加载下一页数据（带重试机制）
+const preloadNextPage = async (retryCount = 0) => {
+  // 如果已经在预加载或没有下一页，跳过
+  if (preloadingNextPage.value || !pagination.value.has_next || vehicles.value.length === 0) {
+    return
+  }
+  
+  preloadingNextPage.value = true
+  
+  try {
+    const params = {
+      page: pagination.value.current_page + 1,
+      limit: 20,
+      sort_by: 'year',
+      sort_order: 'DESC'
+    }
+    
+    // 复制当前筛选条件
+    if (selectedCategory.value && selectedCategory.value !== 'all') {
+      const typeId = categoryMapping[selectedCategory.value]
+      if (typeId) {
+        params.vehicle_type = typeId
+      }
+    }
+    
+    if (selectedBrand.value && selectedBrand.value !== '') {
+      params.car_brand = selectedBrand.value
+    }
+    
+    const priceRangeParams = getPriceRangeParams(selectedPriceRange.value)
+    if (Object.keys(priceRangeParams).length > 0) {
+      params.min_price = priceRangeParams.min_price
+      if (priceRangeParams.max_price !== undefined) {
+        params.max_price = priceRangeParams.max_price
+      }
+    }
+
+    if (selectedYear.value) {
+      params.year = selectedYear.value
+    }
+    
+    if (selectedSeats.value && selectedSeats.value !== 'all') {
+      params.seats = selectedSeats.value
+    }
+    
+    if (searchKeyword.value && searchKeyword.value.trim() !== '') {
+      params.car_model = searchKeyword.value.trim()
+    }
+    
+    const response = await vehicleAPI.getVehicles(params)
+    preloadedData.value = {
+      vehicles: processVehicleData(response.vehicles),
+      pagination: response.pagination
+    }
+  } catch (error) {
+    // 重试机制：最多重试1次，间隔1秒
+    if (retryCount < 1) {
+      const timeoutId = setTimeout(() => {
+        activeTimeouts.delete(timeoutId)
+        preloadNextPage(retryCount + 1)
+      }, 1000)
+      activeTimeouts.add(timeoutId)
+      return
+    }
+    
+    // 重试次数用完，预加载失败不影响正常功能
+  } finally {
+    preloadingNextPage.value = false
+  }
 }
 
 // 加载更多数据
@@ -1048,7 +1647,30 @@ const loadMore = async () => {
     return
   }
   
+  // 如果有预加载的数据，直接使用
+  if (preloadedData.value) {
+    vehicles.value = [...vehicles.value, ...preloadedData.value.vehicles]
+    pagination.value = preloadedData.value.pagination
+    preloadedData.value = null // 清空预加载数据
+    
+    // 继续预加载下一页
+    const timeoutId1 = setTimeout(() => {
+      activeTimeouts.delete(timeoutId1)
+      preloadNextPage()
+    }, 100)
+    activeTimeouts.add(timeoutId1)
+    return
+  }
+  
+  // 没有预加载数据，正常加载
   await fetchVehicles(true)
+  
+  // 加载完成后开始预加载下一页
+  const timeoutId2 = setTimeout(() => {
+    activeTimeouts.delete(timeoutId2)
+    preloadNextPage()
+  }, 100)
+  activeTimeouts.add(timeoutId2)
 }
 
 // 窗口大小变化处理函数
@@ -1066,12 +1688,26 @@ const setupScrollListeners = () => {
   // 先清理现有的监听器
   cleanupScrollListeners()
   
-  // 统一使用 window 滚动监听，避免移动端和桌面端的差异
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  
-  // 移动端额外监听 touchmove 事件，提高移动端滚动检测的准确性
-  if (window.innerWidth <= 1200) {
+  if (window.innerWidth <= 768) {
+    // 移动端：监听 window 滚动
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    // 移动端额外监听 touchmove 事件，提高滚动检测的准确性
     document.addEventListener('touchmove', handleScroll, { passive: true })
+  } else {
+    // 桌面端：需要监听实际的滚动容器
+    // 使用 nextTick 确保 DOM 已渲染
+    nextTick(() => {
+      const { carsContainer, searchContent } = getCachedElements()
+      
+      if (carsContainer) {
+        carsContainer.addEventListener('scroll', handleScroll, { passive: true })
+      }
+      if (searchContent) {
+        searchContent.addEventListener('scroll', handleScroll, { passive: true })
+      }
+      // 同时监听 window 滚动作为备用
+      window.addEventListener('scroll', handleScroll, { passive: true })
+    })
   }
   
   // 监听窗口大小变化，动态调整滚动监听器
@@ -1080,19 +1716,31 @@ const setupScrollListeners = () => {
 
 // 清理滚动监听器
 const cleanupScrollListeners = () => {
-  const carsContainer = document.querySelector('.cars-container')
+  // 清理所有可能的滚动监听器
+  const { carsContainer, searchContent } = getCachedElements()
+  
   if (carsContainer) {
     carsContainer.removeEventListener('scroll', handleScroll)
   }
+  if (searchContent) {
+    searchContent.removeEventListener('scroll', handleScroll)
+  }
+  
   window.removeEventListener('scroll', handleScroll)
   window.removeEventListener('resize', handleResize)
   document.removeEventListener('touchmove', handleScroll)
   
-  // 清理定时器
+  // 清理滚动节流定时器
   if (scrollTimeout) {
     clearTimeout(scrollTimeout)
     scrollTimeout = null
   }
+  
+  // 清理所有活跃的定时器
+  activeTimeouts.forEach(timeoutId => {
+    clearTimeout(timeoutId)
+  })
+  activeTimeouts.clear()
 }
 
 // 确保页面滚动到顶部
@@ -1111,198 +1759,95 @@ const scrollToTop = () => {
   })
 }
 
-// 滚动位置恢复函数已移除
-
-// 滚动位置持久化与恢复
-const SCROLL_POS_PREFIX = 'search_scroll_'
-
-const getScrollKey = () => {
-  // 使用完整路由（含查询）作为 key，确保不同筛选条件分别记录
-  return `${SCROLL_POS_PREFIX}${router.currentRoute.value.fullPath}`
-}
-
-// 详情抽屉相关状态已移至 VehicleDetailDrawer 组件
-
-const getActiveScrollTarget = () => {
-  // 移动端统一使用 window 滚动
-  if (window.innerWidth <= 768) return 'window'
-  const carsContainerEl = document.querySelector('.cars-container')
-  const searchContentEl = document.querySelector('.search-content')
-  // 优先 cars-container，其次 search-content
-  if (carsContainerEl && carsContainerEl.scrollHeight > carsContainerEl.clientHeight) return 'cars'
-  if (searchContentEl && searchContentEl.scrollHeight > searchContentEl.clientHeight) return 'search'
-  return 'window'
-}
-
-// 获取移动端固定头部（AppHeader + 移动筛选容器）的总高度
-const getMobileFixedHeaderHeight = () => {
-  if (window.innerWidth > 768) return 0
-  // 与 calculateMobileHeaderHeight 逻辑保持一致：AppHeader 80 + 容器高度
-  const appHeaderHeight = 80
-  const container = document.querySelector('.mobile-search-filter-container')
-  const containerHeight = container ? (container.offsetHeight || 0) : 0
-  return appHeaderHeight + containerHeight
-}
-
-// 找到当前视口内第一个可视车卡片（用于移动端锚点恢复）
-const getFirstVisibleCard = () => {
-  const cards = Array.from(document.querySelectorAll('.car-card'))
-  if (!cards.length) return null
-  const headerOffset = getMobileFixedHeaderHeight()
-  // 选择 top 超过头部区域的第一张卡片
-  for (const el of cards) {
-    const rect = el.getBoundingClientRect()
-    if (rect.bottom > headerOffset + 1) {
-      return el
-    }
-  }
-  return cards[0]
-}
-
-const getCurrentScrollPositions = () => {
-  const target = getActiveScrollTarget()
-  const windowY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
-  const searchContentEl = document.querySelector('.search-content')
-  const carsContainerEl = document.querySelector('.cars-container')
-  const searchContentY = searchContentEl ? searchContentEl.scrollTop : 0
-  const carsContainerY = carsContainerEl ? carsContainerEl.scrollTop : 0
-  let y = windowY
-  if (target === 'cars') y = carsContainerY
-  if (target === 'search') y = searchContentY
-  // 移动端增加锚点信息（首个可视卡片及其相对偏移），更稳健
-  let anchor = null
-  if (target === 'window') {
-    const firstCard = getFirstVisibleCard()
-    if (firstCard) {
-      const headerOffset = getMobileFixedHeaderHeight()
-      const rect = firstCard.getBoundingClientRect()
-      const id = firstCard.getAttribute('data-id')
-      const offset = rect.top - headerOffset
-      anchor = { id, offset }
-    }
-  }
-  return { target, y, windowY, searchContentY, carsContainerY, anchor }
-}
-
-const saveScrollPosition = () => {
-  try {
-    const key = getScrollKey()
-    const pos = getCurrentScrollPositions()
-    sessionStorage.setItem(key, JSON.stringify(pos))
-    // 记录最后一次位置，作为兜底
-    sessionStorage.setItem(`${SCROLL_POS_PREFIX}last`, JSON.stringify({ key, ...pos }))
-  } catch (e) {
-    // 存储失败忽略
-  }
-}
-
-const restoreScrollPosition = () => {
-  try {
-    isRestoringScroll.value = true
-    const key = getScrollKey()
-    let raw = sessionStorage.getItem(key)
-    if (!raw) {
-      raw = sessionStorage.getItem(`${SCROLL_POS_PREFIX}last`)
-    }
-    if (!raw) return
-    const data = JSON.parse(raw)
-
-    // 兼容旧格式
-    const preferredTarget = data.target || getActiveScrollTarget()
-    const targetYFromData = data.y !== undefined ? data.y : (preferredTarget === 'cars' ? data.carsContainerY : preferredTarget === 'search' ? data.searchContentY : data.windowY) || 0
-
-    const carsContainerEl = document.querySelector('.cars-container')
-    const searchContentEl = document.querySelector('.search-content')
-
-    // 移动端优先按锚点恢复，规避图片加载与布局抖动
-    const tryAnchorRestore = () => {
-      if (window.innerWidth > 768) return false
-      if (!data.anchor || !data.anchor.id) return false
-      const el = document.querySelector(`.car-card[data-id="${data.anchor.id}"]`)
-      if (!el) return false
-      const headerOffset = getMobileFixedHeaderHeight()
-      const rect = el.getBoundingClientRect()
-      const currentViewportTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
-      const targetY = currentViewportTop + rect.top - headerOffset - (data.anchor.offset || 0)
-      window.scrollTo(0, Math.max(0, targetY))
-      return true
-    }
-
-    const setScrollY = (y) => {
-      const activeTarget = getActiveScrollTarget()
-      if (activeTarget === 'window') {
-        const maxY = Math.max(0, (document.documentElement.scrollHeight || document.body.scrollHeight || 0) - (window.innerHeight || document.documentElement.clientHeight || 0))
-        window.scrollTo(0, Math.min(y, maxY))
-      } else if (activeTarget === 'cars' && carsContainerEl) {
-        const maxY = Math.max(0, carsContainerEl.scrollHeight - carsContainerEl.clientHeight)
-        carsContainerEl.scrollTop = Math.min(y, maxY)
-      } else if (activeTarget === 'search' && searchContentEl) {
-        const maxY = Math.max(0, searchContentEl.scrollHeight - searchContentEl.clientHeight)
-        searchContentEl.scrollTop = Math.min(y, maxY)
-      } else {
-        window.scrollTo(0, y)
-      }
-    }
-
-    // 使用 rAF 重试，直到接近目标位置或达到最大尝试次数
-    let attempts = 0
-    const maxAttempts = 20
-    const tryApply = () => {
-      // 移动端优先锚点恢复；若失败则回退到像素恢复
-      const usedAnchor = tryAnchorRestore()
-      if (!usedAnchor) setScrollY(targetYFromData)
-      attempts += 1
-      const current = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
-      const expected = usedAnchor ? current : targetYFromData
-      const diff = Math.abs(current - expected)
-      if (diff <= 2 || attempts >= maxAttempts) {
-        isRestoringScroll.value = false
-        return
-      }
-      requestAnimationFrame(tryApply)
-    }
-    requestAnimationFrame(tryApply)
-  } catch (e) {
-    // 恢复失败忽略
-    isRestoringScroll.value = false
-  }
-}
-
 // 打开移动端筛选抽屉
 const openFilterDrawer = () => {
+  // 备份当前筛选状态
+  backupCategory.value = selectedCategory.value
+  backupBrand.value = selectedBrand.value
+  backupPriceRange.value = selectedPriceRange.value
+  backupYear.value = selectedYear.value
+  backupSeats.value = selectedSeats.value
+  
   filterDrawerVisible.value = true
-  tempCategory.value = selectedCategory.value
-  tempBrand.value = selectedBrand.value
-  tempPriceRange.value = selectedPriceRange.value
-  tempYear.value = selectedYear.value
   activeTab.value = 'category' // 打开时默认选中分类
+  
+  // 移动端滚动优化：确保抽屉内容可以正常滚动
+  nextTick(() => {
+    const tabsContent = document.querySelector('.mobile-filter-drawer .el-tabs__content')
+    if (tabsContent) {
+      // 强制重新计算滚动区域
+      tabsContent.style.overflowY = 'auto'
+      tabsContent.style.webkitOverflowScrolling = 'touch'
+    }
+  })
 }
 
 // 关闭移动端筛选抽屉
 const closeFilterDrawer = () => {
+  // 恢复到备份的筛选状态
+  selectedCategory.value = backupCategory.value
+  selectedBrand.value = backupBrand.value
+  selectedPriceRange.value = backupPriceRange.value
+  selectedYear.value = backupYear.value
+  selectedSeats.value = backupSeats.value
+  
   filterDrawerVisible.value = false
-  // 不应用临时筛选值，保持原有状态
+}
+
+// 移动端筛选函数（会清空搜索框）
+const handleMobileFilterChange = (filterType, value) => {
+  // 清空搜索框内容
+  searchKeyword.value = ''
+  
+  // 清空预加载数据
+  preloadedData.value = null
+  
+  // 更新对应的筛选条件
+  switch (filterType) {
+    case 'category':
+      selectedCategory.value = value
+      break
+    case 'brand':
+      selectedBrand.value = value
+      break
+    case 'priceRange':
+      selectedPriceRange.value = value
+      break
+    case 'year':
+      selectedYear.value = value
+      break
+    case 'seats':
+      selectedSeats.value = value
+      break
+  }
+}
+
+const handleMobileCategoryChange = (category) => {
+  handleMobileFilterChange('category', category)
+}
+
+const handleMobileBrandChange = (brand) => {
+  handleMobileFilterChange('brand', brand)
+}
+
+const handleMobilePriceRangeChange = (priceRange) => {
+  handleMobileFilterChange('priceRange', priceRange)
+}
+
+const handleMobileYearChange = (year) => {
+  handleMobileFilterChange('year', year)
+}
+
+const handleMobileSeatsChange = (seats) => {
+  handleMobileFilterChange('seats', seats)
 }
 
 // 应用移动端筛选条件
 const applyFilters = () => {
-  selectedCategory.value = tempCategory.value
-  selectedBrand.value = tempBrand.value
-  selectedPriceRange.value = tempPriceRange.value
-  selectedYear.value = tempYear.value
+  // 清空预加载数据
+  preloadedData.value = null
   
-  // 重置分页状态
-  pagination.value = {
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0,
-    limit: 20,
-    has_next: false,
-    has_prev: false
-  }
-  
-  // 清空现有数据
-  vehicles.value = []
+  resetPaginationAndData()
   
   // 重新获取数据
   fetchVehicles()
@@ -1315,95 +1860,121 @@ const applyFilters = () => {
 }
 
 // 计算移动端头部高度
-  const calculateMobileHeaderHeight = () => {
-    if (!isMobile.value || !mobileSearchFilterContainer.value) {
-      return 140 // 默认值
+const calculateMobileHeaderHeight = () => {
+  if (!isMobile.value || !mobileSearchFilterContainer.value) {
+    return 140 // 默认值
+  }
+  
+  // AppHeader 高度（固定 80px）
+  const appHeaderHeight = 80
+  
+  // 获取移动端搜索筛选容器的高度
+  const containerHeight = mobileSearchFilterContainer.value.offsetHeight || 0
+  
+  // 总高度 = AppHeader + 容器高度
+  const totalHeight = appHeaderHeight + containerHeight
+  
+  return totalHeight
+}
+
+// 更新移动端头部高度（带重试机制）
+const updateMobileHeaderHeight = (retryCount = 0) => {
+  if (!isMobile.value) {
+    return
+  }
+  
+  // 延迟执行，确保DOM完全渲染
+  const timeoutId = setTimeout(() => {
+    activeTimeouts.delete(timeoutId)
+    const calculatedHeight = calculateMobileHeaderHeight()
+    
+    // 如果计算出的高度是默认值且还有重试次数，则重试
+    if (calculatedHeight === 140 && retryCount < 3) {
+      updateMobileHeaderHeight(retryCount + 1)
+      return
     }
     
-    // AppHeader 高度（固定 80px）
-    const appHeaderHeight = 80
-    
-    // 获取移动端搜索筛选容器的高度
-    const containerHeight = mobileSearchFilterContainer.value.offsetHeight || 0
-    
-    // 总高度 = AppHeader + 容器高度
-    const totalHeight = appHeaderHeight + containerHeight
-    
-    console.log('移动端头部高度计算:', {
-      appHeaderHeight,
-      containerHeight,
-      totalHeight
-    })
-    
-    return totalHeight
-  }
-
-// 更新移动端头部高度
-const updateMobileHeaderHeight = () => {
-  if (isMobile.value) {
-    nextTick(() => {
-      mobileHeaderHeight.value = calculateMobileHeaderHeight()
-    })
-  }
+    mobileHeaderHeight.value = calculatedHeight
+  }, 100) // 延迟100ms确保DOM渲染完成
+  activeTimeouts.add(timeoutId)
 }
 
 // 获取移动端筛选栏的显示值
 const getCategoryDisplayName = (category = selectedCategory.value) => {
   if (category === 'all') {
-    return '全部'
+    return t('search.filters.allVehicles')
   }
   const categoryObj = categories.value.find(c => c.value === category)
-  return categoryObj ? categoryObj.label : '全部'
+  return categoryObj ? categoryObj.label : t('search.filters.allVehicles')
 }
 
 const getPriceDisplayName = (priceRange = selectedPriceRange.value) => {
   const range = priceRanges.value.find(r => r.value === priceRange)
-  return range ? range.label : '不限'
+  return range ? range.label : t('search.filters.allVehicles')
 }
 
 const getYearDisplayName = (year = selectedYear.value) => {
-  return year ? year.toString() : '不限'
+  return year ? year.toString() : t('search.filters.allVehicles')
+}
+
+const getSeatsDisplayName = (seats = selectedSeats.value) => {
+  if (seats === 'all') {
+    return t('search.filters.seats.all')
+  }
+  const seatObj = seatOptions.value.find(s => s.value === seats)
+  return seatObj ? seatObj.label : t('search.filters.seats.all')
 }
 
 const getBrandDisplayName = (brand = selectedBrand.value) => {
-  return brand && brand !== '' ? brand : '不限'
+  return brand && brand !== '' ? brand : t('search.filters.allVehicles')
 }
 
-// 监听路由变化，只在组件初始化时设置一次
+// 监听路由变化，同步筛选条件
 watch(() => route.query, (newQuery, oldQuery) => {
-  // 只在组件初始化时设置一次，避免后续路由更新覆盖用户选择
+  // 同步路由查询参数到筛选条件
+  searchKeyword.value = newQuery.car_model || ''
+  selectedCategory.value = newQuery.category || 'private' // 默认显示私家车
+  // 品牌参数需要特殊处理，使用反向映射
+  if (newQuery.brand) {
+    selectedBrand.value = getBrandFromUrl(newQuery.brand)
+  } else {
+    selectedBrand.value = ''
+  }
+  selectedPriceRange.value = newQuery.priceRange || 'all'
+  selectedYear.value = newQuery.year ? parseInt(newQuery.year) : null
+  selectedSeats.value = newQuery.seats || 'all'
+  
+  // 同步备份变量
+  backupCategory.value = selectedCategory.value
+  backupBrand.value = selectedBrand.value
+  backupPriceRange.value = selectedPriceRange.value
+  backupYear.value = selectedYear.value
+  backupSeats.value = selectedSeats.value
+  
+  // 清空预加载数据
+  preloadedData.value = null
+  
+  // 重新获取数据
+  // 如果是首次加载（oldQuery为空），或者查询参数确实发生了变化
   if (!oldQuery || Object.keys(oldQuery).length === 0) {
-    if (newQuery.keyword !== undefined) searchKeyword.value = newQuery.keyword || ''
-    if (newQuery.category !== undefined) selectedCategory.value = newQuery.category || 'all'
-    if (newQuery.brand !== undefined) selectedBrand.value = newQuery.brand || ''
-    if (newQuery.priceRange !== undefined) selectedPriceRange.value = newQuery.priceRange || 'all'
-    if (newQuery.year !== undefined) selectedYear.value = parseInt(newQuery.year) || null
+    // 首次加载，直接获取数据
+    fetchVehicles()
+  } else {
+    // 检查查询参数是否真的发生了变化
+    const oldQueryStr = JSON.stringify(oldQuery)
+    const newQueryStr = JSON.stringify(newQuery)
+    if (oldQueryStr !== newQueryStr) {
+      fetchVehicles()
+    }
   }
 }, { immediate: true })
 
-// 添加一个专门监听分类变化的 watcher，用于调试
-watch(selectedCategory, (newCategory, oldCategory) => {
-  // 分类状态变化处理
-})
+
 
 // 组件挂载后初始化
 onMounted(() => {
-  // 从路由参数初始化筛选条件
-  if (route.query.keyword) searchKeyword.value = route.query.keyword
-  if (route.query.category) {
-    selectedCategory.value = route.query.category
-  }
-  if (route.query.brand) {
-    selectedBrand.value = route.query.brand
-  }
-  if (route.query.priceRange) selectedPriceRange.value = route.query.priceRange || 'all'
-  if (route.query.year) selectedYear.value = parseInt(route.query.year) || null
-  
   // 获取品牌列表
   fetchBrands()
-  
-  // 获取车辆数据
-  fetchVehicles()
   
   // 添加滚动监听器到正确的滚动容器
   nextTick(() => {
@@ -1415,52 +1986,34 @@ onMounted(() => {
 
 // 组件激活时（从详情页返回）
 onActivated(() => {
-  // 构建当前搜索条件参数
-  const searchParams = {
-    category: selectedCategory.value,
-    brand: selectedBrand.value,
-    priceRange: selectedPriceRange.value,
-    year: selectedYear.value,
-    keyword: searchKeyword.value
-  }
-  
-  // 检查是否有缓存数据
-  const cachedResult = searchStore.getCachedSearchResult(searchParams)
-  if (cachedResult) {
-    vehicles.value = cachedResult.vehicles
-    pagination.value = cachedResult.pagination
-    // currentCacheKey已经在getCachedSearchResult中设置了
-    
-    // 重新设置滚动监听器
-    nextTick(() => {
-      setupScrollListeners()
-      
-      // 滚动位置恢复逻辑已移除
-      // 返回时恢复滚动位置
-      restoreScrollPosition()
-    })
-  } else {
-    // 如果没有缓存，重新获取数据
-    fetchVehicles()
-    
-    // 重新设置滚动监听器
-    nextTick(() => {
-      setupScrollListeners()
-      // 返回时恢复滚动位置
-      restoreScrollPosition()
-    })
-  }
+  // 重新设置滚动监听器
+  nextTick(() => {
+    setupScrollListeners()
+  })
 })
 
-// 组件卸载时清理滚动监听器
+// 组件卸载时清理滚动监听器和预加载状态
 onUnmounted(() => {
   cleanupScrollListeners()
+  // 清理预加载状态
+  preloadedData.value = null
+  preloadingNextPage.value = false
+  // 清理价格缓存
+  priceCache.clear()
+  // 清理滚动节流定时器
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+    scrollTimeout = null
+  }
+  // 清理所有定时器
+  activeTimeouts.forEach(timeoutId => {
+    clearTimeout(timeoutId)
+  })
+  activeTimeouts.clear()
 })
 
 // 组件失活时清理滚动监听器（离开搜索页面时）
 onDeactivated(() => {
-  // 离开页面时保存滚动位置
-  saveScrollPosition()
   cleanupScrollListeners()
 })
 
@@ -1483,7 +2036,6 @@ watch(
 watch(
   () => route.query,
   (newQuery, oldQuery) => {
-    if (isRestoringScroll.value) return
     // 仅在查询内容确实变化时回到顶部
     const changed = JSON.stringify(newQuery || {}) !== JSON.stringify(oldQuery || {})
     if (changed) scrollToTop()
@@ -1496,6 +2048,29 @@ watch(isMobile, (newIsMobile, oldIsMobile) => {
   if (newIsMobile !== oldIsMobile) {
     nextTick(() => {
       updateMobileHeaderHeight()
+    })
+  }
+})
+
+// 监听筛选抽屉状态，优化移动端滚动
+watch(filterDrawerVisible, (isVisible) => {
+  if (isVisible && isMobile.value) {
+    // 抽屉打开时，确保滚动功能正常
+    nextTick(() => {
+      const tabsContent = document.querySelector('.mobile-filter-drawer .el-tabs__content')
+      const tabContent = document.querySelector('.mobile-filter-drawer .tab-content')
+      
+      if (tabsContent) {
+        tabsContent.style.overflowY = 'auto'
+        tabsContent.style.webkitOverflowScrolling = 'touch'
+        tabsContent.style.touchAction = 'pan-y'
+      }
+      
+      if (tabContent) {
+        tabContent.style.overflowY = 'auto'
+        tabContent.style.webkitOverflowScrolling = 'touch'
+        tabContent.style.touchAction = 'pan-y'
+      }
     })
   }
 })
@@ -1604,6 +2179,37 @@ function getResultsTitle() {
       }
     }
 
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      
+      .filter-btn, .reset-btn {
+        width: 100%;
+      }
+    }
+
+    .filter-display {
+      .current-selection {
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        
+        .selection-label {
+          font-size: 12px;
+          color: #666;
+          margin-right: 8px;
+        }
+        
+        .selection-value {
+          font-size: 14px;
+          color: #333;
+          font-weight: 500;
+        }
+      }
+    }
+
     .filter-options {
       display: flex;
       flex-direction: column;
@@ -1690,6 +2296,10 @@ function getResultsTitle() {
     .year-select {
       width: 100%;
     }
+
+    .seats-select {
+      width: 100%;
+    }
   }
 
   .reset-filters-btn {
@@ -1719,6 +2329,92 @@ function getResultsTitle() {
       background: #fff;
       border-bottom: 1px solid #f0f0f0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 12px 16px 8px 16px;
+    }
+  }
+
+  // 搜索框和按钮同一行
+  .search-filter-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 4px;
+
+    .search-input {
+      flex: 0.7; // 进一步减少搜索框的宽度比例
+      
+      :deep(.el-input__wrapper) {
+        height: 36px;
+      }
+    }
+
+    .search-btn {
+      flex: 0.15; // 给搜索按钮分配固定比例
+      padding: 0 12px;
+      height: 36px;
+      min-width: 48px;
+      font-size: 14px;
+    }
+
+    .filter-btn {
+      flex: 0.15; // 给筛选按钮分配固定比例
+      padding: 0 12px;
+      height: 36px;
+      font-size: 14px;
+      min-width: 52px;
+      margin-left: 0 !important;
+    }
+  }
+
+  // 已选择的筛选条件显示
+  .selected-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+    margin-top: 2px;
+
+    .filter-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      flex: 1;
+
+      .filter-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 1px 4px;
+        background: #ecf5ff;
+        border: 1px solid #b3d8ff;
+        border-radius: 10px;
+        font-size: 11px;
+        color: #409eff;
+        line-height: 1.1;
+        height: 20px;
+
+        .clear-icon {
+          font-size: 9px;
+          cursor: pointer;
+          color: #909399;
+          
+          &:hover {
+            color: #f56c6c;
+          }
+        }
+      }
+    }
+
+    .reset-btn {
+      flex-shrink: 0;
+      padding: 0;
+      height: 20px;
+      font-size: 11px;
+      color: #909399;
+      
+      &:hover {
+        color: #409eff;
+      }
     }
   }
 
@@ -1741,101 +2437,13 @@ function getResultsTitle() {
       }
     }
 
-    // 移动端搜索框样式（在容器内）
-    @media (max-width: 768px) {
-      padding: 12px 16px;
-      flex-direction: column;
-      gap: 12px;
-      position: static;
-      border-bottom: none;
-      background: transparent;
-      z-index: auto;
-    }
-
     .search-input {
       flex: 1;
-
-      @media (max-width: 768px) {
-        width: 100%;
-        padding: 0 0;
-      }
     }
-  }
-
-  // 移动端筛选栏
-  .mobile-filter-bar {
-    display: none !important; // 默认隐藏，移动端显示
-
-    @media (max-width: 768px) {
-      display: flex !important;
-      align-items: center;
-      gap: 3px;
-      padding: 6px 16px;
-      background: #fff;
-      border-bottom: 1px solid #f0f0f0;
-      overflow-x: hidden;
-      width: 100%;
-      box-sizing: border-box;
-      flex-direction: row !important;
-      position: static;
-      z-index: auto;
-    }
-
-    .filter-item {
-      display: flex !important;
-      align-items: center;
-      gap: 1px;
-      padding: 3px 8px;
-      margin: 0 4px;
-      background: #f5f7fa;
-      border: 1px solid #e4e7ed;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      flex: 1;
-      min-width: 0;
-      max-width: none;
-      box-sizing: border-box;
-      flex-direction: row !important;
-
-      &:hover {
-        background: #ecf5ff;
-        border-color: #409eff;
-      }
-
-      .filter-label {
-        font-size: 11px;
-        color: #909399;
-        white-space: nowrap;
-        flex-shrink: 0;
-        display: inline-block !important;
-      }
-
-      .filter-value {
-        font-size: 10px;
-        color: #409eff; /* 主色调蓝色 */
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-        min-width: 0;
-        display: inline-block !important;
-      }
-
-      .el-icon {
-        font-size: 9px;
-        color: #909399;
-        flex-shrink: 0;
-        display: inline-block !important;
-      }
-    }
-
-
   }
 
   .results-header {
-    padding: 24px 32px 16px 32px;
+    padding: 0 32px;
     border-bottom: 1px solid #f0f0f0;
     background: #fff;
     flex-shrink: 0;
@@ -1851,14 +2459,40 @@ function getResultsTitle() {
       z-index: auto;
     }
 
-    .results-title {
-      margin: 0 0 8px 0;
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      h2 {
+        margin: 0;
+      }
+      
+      .results-count {
+        margin: 0;
+        flex-shrink: 0;
+      }
+      
+      @media (max-width: 768px) {
+        .results-count {
+          font-size: 12px;
+          
+          .pagination-info {
+            margin-left: 4px;
+            font-size: 11px;
+          }
+        }
+      }
+    }
+
+    h2 {
+      margin: 0;
       font-size: 24px;
       font-weight: 600;
       color: #333;
 
       @media (max-width: 768px) {
-        font-size: 20px;
+        font-size: 18px;
       }
     }
 
@@ -1936,6 +2570,7 @@ function getResultsTitle() {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
 
   @media (max-width: 768px) {
     border-radius: 12px;
@@ -1949,6 +2584,28 @@ function getResultsTitle() {
     @media (max-width: 768px) {
       transform: none;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &.clicking {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(64, 158, 255, 0.3);
+    border: 2px solid #409eff;
+
+    @media (max-width: 768px) {
+      transform: scale(0.98);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(64, 158, 255, 0.1);
+      pointer-events: none;
+      border-radius: inherit;
     }
   }
 
@@ -2001,6 +2658,23 @@ function getResultsTitle() {
       
       &[data-status="下架"] {
         background: #909399;
+      }
+      
+      // 特价车辆标识
+      &.special-offer {
+        background: #f56c6c;
+        color: white;
+        padding: 6px;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .el-icon {
+          font-size: 16px;
+        }
       }
     }
   }
@@ -2098,6 +2772,22 @@ function getResultsTitle() {
           padding: 1px 5px;
         }
       }
+      
+      // 特价车辆价格样式
+      &.special-offer-price {
+        .price {
+          color: #f56c6c !important;
+        }
+
+        .current-price {
+          color: #f56c6c !important;
+        }
+
+        .original-price {
+          color: #f56c6c !important;
+          opacity: 0.7;
+        }
+      }
 
       .price-unit {
         font-size: 14px;
@@ -2162,19 +2852,26 @@ function getResultsTitle() {
 
 /* 移动端筛选抽屉样式 */
 .mobile-filter-drawer {
+  // 确保抽屉在移动端有正确的滚动行为
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   .el-drawer__header {
     display: none; // 隐藏抽屉头部
   }
 
   .el-drawer__body {
     padding: 0; // 移除抽屉内容区域的默认padding
+    overflow: hidden; // 防止抽屉本身滚动
+    -webkit-overflow-scrolling: touch; // 优化移动端滚动体验
+    touch-action: pan-y; // 允许垂直滚动
   }
 
   .filter-drawer-content {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 20px;
+    overflow: hidden; // 防止整个容器滚动
+    -webkit-overflow-scrolling: touch; // 优化移动端滚动体验
   }
 
   .drawer-header {
@@ -2184,6 +2881,7 @@ function getResultsTitle() {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0; // 防止头部被压缩
 
     h3 {
       margin: 0;
@@ -2199,19 +2897,7 @@ function getResultsTitle() {
     }
   }
 
-  .filter-tabs {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch; // 优化移动端滚动
 
-    .el-tabs__content {
-      padding: 0;
-    }
-
-    .el-tab-pane {
-      padding: 0;
-    }
-  }
 
   .current-selection {
     display: flex;
@@ -2277,11 +2963,12 @@ function getResultsTitle() {
   }
 
   .selected-filters-summary {
-    margin: 0; /* 不要外边距 */
+    margin: 0 0 20px 0; /* 添加底部间距 */
     padding: 10px 16px; /* 轻量内边距 */
     background: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e9ecef;
+    flex-shrink: 0; // 防止被压缩
 
     .summary-items {
       display: flex;
@@ -2304,23 +2991,32 @@ function getResultsTitle() {
 
   .filter-tabs {
     flex: 1;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0; // 确保flex子元素可以收缩
 
     .el-tabs__header {
       margin: 0 20px;
       border-bottom: 1px solid #e4e7ed;
+      flex-shrink: 0; // 防止头部被压缩
     }
 
     .el-tabs__content {
       flex: 1;
-      overflow-y: auto;
+      overflow-y: auto !important; // 强制启用垂直滚动
+      overflow-x: hidden;
       padding: 20px;
+      -webkit-overflow-scrolling: touch; // 优化移动端滚动体验
+      min-height: 0; // 确保滚动容器有足够的高度
+      touch-action: pan-y; // 允许垂直滚动
     }
 
     .tab-content {
       height: 100%;
+      overflow-y: auto !important; // 强制启用垂直滚动
+      -webkit-overflow-scrolling: touch;
+      min-height: 0; // 确保内容区域可以滚动
+      touch-action: pan-y; // 允许垂直滚动
     }
 
     .filter-options-mobile {
@@ -2328,6 +3024,9 @@ function getResultsTitle() {
       grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
       gap: 12px;
       padding: 0;
+      min-height: 0; // 确保内容可以正常滚动
+      overflow: visible;
+      -webkit-overflow-scrolling: touch; // 优化移动端滚动体验
     }
 
     .filter-btn-mobile {
@@ -2359,12 +3058,154 @@ function getResultsTitle() {
     gap: 12px;
     justify-content: flex-end;
     background: white;
+    flex-shrink: 0; // 防止底部被压缩
 
     .el-button {
       min-width: 80px;
     }
   }
+
+  // 移动端特定优化
+  @media (max-width: 768px) {
+    .el-tabs__content {
+      padding: 15px; // 减少移动端内边距
+      touch-action: pan-y; // 允许垂直滚动
+    }
+    
+    .tab-content {
+      touch-action: pan-y; // 允许垂直滚动
+    }
+    
+    .filter-options-mobile {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); // 调整移动端网格列宽
+      gap: 8px; // 减少移动端间距
+      touch-action: pan-y; // 允许垂直滚动
+    }
+    
+    .filter-btn-mobile {
+      height: 36px; // 调整移动端按钮高度
+      font-size: 13px; // 调整移动端字体大小
+      touch-action: manipulation; // 优化触摸响应
+    }
+  }
 }
 
 /* 详情抽屉样式已移至 VehicleDetailDrawer 组件 */
+
+/* 加载状态样式 */
+.loading-container {
+  padding: 20px;
+  
+  .loading-header {
+    margin-bottom: 20px;
+  }
+  
+  .loading-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+  
+  .loading-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    
+    .loading-card-content {
+      padding: 16px;
+    }
+  }
+}
+
+.loading-more {
+  padding: 20px;
+  
+  .loading-more-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    color: #909399;
+    
+    .loading-icon {
+      animation: rotate 1s linear infinite;
+      font-size: 18px;
+    }
+    
+    .loading-text {
+      font-size: 14px;
+    }
+  }
+  
+  .loading-more-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.no-more-data {
+  padding: 20px;
+  text-align: center;
+  
+  .no-more-text {
+    color: #909399;
+    font-size: 14px;
+  }
+}
+
+/* 全局加载指示器 */
+.global-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  
+  .loading-spinner {
+    text-align: center;
+    
+    .spinner-icon {
+      font-size: 48px;
+      color: #409eff;
+      animation: rotate 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    .loading-text {
+      font-size: 16px;
+      color: #606266;
+      margin: 0;
+      font-weight: 500;
+    }
+  }
+}
 </style>

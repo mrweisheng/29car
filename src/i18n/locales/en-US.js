@@ -43,7 +43,7 @@ export default {
 
   // Search
   search: {
-    placeholder: 'Search brand/model/price',
+    placeholder: 'Search model like 730',
     noResults: 'No search results',
     searchSuccess: 'Searched for: {keyword}',
     filterTitle: 'Filters',
@@ -58,6 +58,8 @@ export default {
       minPrice: 'Min Price',
       maxPrice: 'Max Price',
       selectYear: 'Select Year',
+      seats: 'Seats',
+      selectSeats: 'Select Seats',
       selectPriceRange: 'Select Price Range',
       priceRange: {
         all: 'All Prices',
@@ -72,7 +74,15 @@ export default {
         '50to100': '500K-1M',
         over100: 'Over 1M'
       },
+      seats: {
+        all: 'All Seats',
+        '5': '5 Seats',
+        '6': '6 Seats',
+        '7': '7 Seats',
+        unknown: 'Unknown Seats'
+      },
       resetFilters: 'Reset Filters',
+      reset: 'Reset Filters',
       allVehicles: 'All Vehicles'
     },
     fuelTypes: {
@@ -84,25 +94,30 @@ export default {
     badges: {
       new: 'New',
       classic: 'Classic'
-    }
+    },
+    priceNegotiable: 'Price Negotiable',
+    specialOfferPrice: 'HKD$98,000 (Including Car + Cross-border License)',
+    unknownVehicle: 'Unknown Vehicle',
+    noContact: 'No Contact',
+    noPhone: 'No Phone'
   },
 
   // Home
   home: {
     header: {
-      tagline: 'Yifa Guangdong-Hong Kong Vehicles'
+      tagline: 'Mingge Guangdong-Hong Kong Vehicles'
     },
     hero: {
-      title: 'Yifa Guangdong-Hong Kong Vehicles',
+      title: 'Mingge Guangdong-Hong Kong Vehicles',
       subtitle: 'Comprehensive automotive services from purchase to maintenance, all-in-one solution',
       getStarted: 'Get Started',
       learnMore: 'Learn More',
       sellCar: 'Sell Car',
       browseCars: 'Browse Cars',
       stats: {
-        vehicles: 'Vehicles',
-        users: 'Users',
-        deals: 'Deals'
+        years: 'Years of Experience',
+        customers: 'Satisfied Customers',
+        transactions: 'Successful Transactions'
       }
     },
     features: {
@@ -126,6 +141,10 @@ export default {
     },
     featured: {
       title: 'Featured Vehicles',
+      viewAll: 'View All'
+    },
+    specialOffer: {
+      title: 'Special Offers',
       viewAll: 'View All'
     },
     latest: {
@@ -167,6 +186,25 @@ export default {
       motorcycle: 'Motorcycle',
       classic: 'Classic Car'
     },
+    // Mobile category cards
+    mobileCategory: {
+      searchCars: {
+        title: 'Personal Car Search',
+        description: 'Search for your ideal vehicle and find the perfect ride'
+      },
+      crossBorder: {
+        title: 'Cross-Border Permits',
+        description: 'Professional cross-border vehicle permit services'
+      },
+      specialOffer: {
+        title: 'Special Offers',
+        description: 'Selected discounted vehicles, great deals not to be missed'
+      },
+      vehicleRegistration: {
+        title: 'Vehicle Registration',
+        description: 'Professional vehicle registration services, convenient procedures'
+      }
+    },
     stats: {
       satisfiedCustomers: 'Satisfied Customers',
       serviceVehicles: 'Service Vehicles',
@@ -178,69 +216,71 @@ export default {
   // About
   about: {
     title: 'About Us',
-    subtitle: 'Learn about EasyFa YueGang Car\'s story and mission',
+    subtitle: 'Specializing in Cross-Border Vehicle Services, Your Trusted Choice',
     story: {
-      title: 'About Us - 42 Years of Excellence, Trust as Foundation',
-      content1: 'Since 1982, we understand your trust better. Established in 1982, Yifa Guangdong-Hong Kong Car has been serving Hong Kong and Mainland clients for 42 years. We are not a new consulting company, but an established Hong Kong car dealership with deep roots.',
-      content2: 'We understand that a suitable car represents business advancement, time value, and status symbol for you. For 42 years, we have adhered to one principle: "Entrusted by others, loyal to others." Choosing Yifa Guangdong-Hong Kong Car means choosing peace of mind tested by time.',
+              title: 'Mingge Guangdong-Hong Kong Vehicles - Specializing in Cross-Border Vehicle Services',
+              content1: 'Since 1982, we understand your trust better. Established in 1982, Mingge Guangdong-Hong Kong Vehicles has been specializing in cross-border vehicle services for many years. We are not a new consulting company, but an established Hong Kong car dealership with deep roots.',
+              content2: 'We understand that a Guangdong-Z cross-border vehicle permit represents business advancement, time value, and status symbol for you. For many years, we have adhered to one principle: "Entrusted by others, loyal to others." Choosing Mingge Guangdong-Hong Kong Vehicles means choosing peace of mind tested by time.',
       officeEnvironment: 'Office Environment'
     },
-    values: {
-      title: 'Core Values',
+    advantages: {
+      title: 'Core Advantages',
+      experience: {
+        title: 'Years of Professional Experience',
+        description: 'Specializing in cross-border vehicle services for many years, reputation-based, professional and reliable'
+      },
+      entity: {
+        title: 'Hong Kong Physical Car Dealership',
+        description: '3 Sheung Shui Ma Hui Road, welcome to visit anytime, cooperation with confidence'
+      },
+      service: {
+        title: 'One-Stop VIP Service',
+        description: 'From qualification assessment to successful permit application, full professional agency service, saving you time and effort'
+      }
+    },
+    commitments: {
+      title: 'Service Commitments',
+      guarantee: {
+        title: 'Result Guarantee',
+        description: 'If unsuccessful, full refund. Your trust, we guarantee with the most practical actions'
+      },
       professional: {
         title: 'Professional Service',
-        description: 'Provide professional and reliable automotive services to ensure customer satisfaction'
-      },
-      customerFirst: {
-        title: 'Customer First',
-        description: 'Customer-centric approach, providing personalized service solutions'
-      },
-      efficient: {
-        title: 'Efficient & Convenient',
-        description: 'Leverage modern technology to provide efficient and convenient service experience'
-      },
-      safe: {
-        title: 'Safe & Reliable',
-        description: 'Ensure service safety and reliability, giving customers peace of mind'
-      },
-      innovative: {
-        title: 'Innovation and Progress',
-        description: 'Continuously innovate service models and lead industry development trends'
-      },
-      integrity: {
-        title: 'Integrity Management',
-        description: 'Adhere to integrity as the foundation and establish long-term trust relationships'
+        description: '1-on-1 qualification assessment, full material agency service, ensuring high approval rate'
       }
     },
-    team: {
-      title: 'Our Team',
-      members: {
-        manager: {
-          name: 'Manager Zhang',
-          position: 'General Manager',
-          description: '15 years of automotive industry experience, focused on customer service optimization'
-        },
-        engineer: {
-          name: 'Engineer Li',
-          position: 'Technical Director',
-          description: 'Senior automotive technology expert, responsible for technical team management'
-        },
-        consultant: {
-          name: 'Consultant Wang',
-          position: 'Customer Service Director',
-          description: 'Focused on customer experience enhancement, ensuring service quality'
-        }
+    services: {
+      title: 'Service Content',
+        description: 'You will receive "one-stop" exclusive service provided by Mingge Guangdong-Hong Kong Vehicles senior team',
+      list: {
+        assessment: '1-on-1 Qualification Assessment and Optimization Advice',
+        materials: 'Full Material Agency Service',
+        qualification: 'Enterprise Qualification Configuration',
+        government: 'Full Government Affairs Agency Service',
+        accompany: 'Dedicated VIP Accompaniment Service',
+        lifetime: 'Lifetime Advisory Service'
       }
     },
-    service: {
-      title: 'Professional Service',
-      description: 'We provide professional automotive services from sales to after-sales, ensuring comprehensive support throughout your journey. With years of industry experience and a professional team, we guarantee every customer enjoys high-quality service experience.'
+    contact: {
+      title: 'Contact Us',
+      address: {
+        title: 'Company Address',
+        value: '3 Sheung Shui Ma Hui Road'
+      },
+      phone: {
+        title: 'Contact Phone',
+        value: '98702065'
+      },
+      wechat: {
+        title: 'WeChat Contact',
+        value: 'Please add WeChat for consultation'
+      }
     }
   },
 
   // Footer
   footer: {
-    platform: 'Yifa Guangdong-Hong Kong Vehicles',
+            platform: 'Mingge Guangdong-Hong Kong Vehicles',
     services: 'Services',
     about: 'About Us',
     carPurchase: 'Car Purchase',
@@ -273,41 +313,68 @@ export default {
   // Authentication
   auth: {
     title: 'Login & Register',
-    subtitle: 'Welcome to EasyFa YueGang Car, please login or register your account',
-    login: 'Login',
-    register: 'Register',
-    username: 'Username',
-    password: 'Password',
-    confirmPassword: 'Confirm Password',
-    realName: 'Contact Name',
-    realNameTip: 'Please enter your real name for contact',
-    nickname: 'Nickname',
-    gender: 'Gender',
-    male: 'Male',
-    female: 'Female',
-    other: 'Other',
-    phone: 'Phone Number',
-    email: 'Email',
-    captcha: 'Verification Code',
-    usernameRequired: 'Please enter username',
-    usernameMinLength: 'Username must be at least 3 characters',
-    passwordRequired: 'Please enter password',
-    passwordMinLength: 'Password must be at least 6 characters',
-    confirmPasswordRequired: 'Please confirm password',
-    passwordMismatch: 'Passwords do not match',
-    realNameRequired: 'Please enter contact name',
-    nicknameRequired: 'Please enter nickname',
-    genderRequired: 'Please select gender',
-    phoneRequired: 'Please enter phone number',
-    phoneFormat: 'Please enter correct phone number format',
-    emailRequired: 'Please enter email',
-    emailFormat: 'Please enter correct email format',
-    captchaRequired: 'Please enter verification code',
-    captchaFormat: 'Verification code is 4 digits',
-    loginSuccess: 'Login successful',
-    registerSuccess: 'Registration successful, please login',
-    usernameTip: 'Username is for login, only letters and numbers allowed',
-    nicknameTip: 'Nickname will be displayed on the site, can be Chinese or English'
+         subtitle: 'Welcome to Mingge Guangdong-Hong Kong Vehicles, please login or register your account',
+    login: {
+      title: 'Login'
+    },
+    register: {
+      title: 'Register'
+    },
+    form: {
+      email: 'Email/Username',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+      username: 'Username',
+      realName: 'Contact Name',
+      gender: 'Gender',
+      phone: 'Phone Number',
+      captcha: 'Verification Code',
+      remember: 'Remember Me',
+      forgotPassword: 'Forgot Password?',
+      agreement: {
+        prefix: 'I have read and agree to the',
+        terms: 'Terms of Service',
+        and: 'and',
+        privacy: 'Privacy Policy'
+      }
+    },
+    button: {
+      login: 'Login',
+      register: 'Register',
+      refreshCaptcha: 'Refresh Code'
+    },
+    gender: {
+      male: 'Male',
+      female: 'Female',
+      other: 'Other'
+    },
+    validation: {
+      usernameRequired: 'Please enter username',
+      usernameMinLength: 'Username must be at least 3 characters',
+      passwordRequired: 'Please enter password',
+      passwordMinLength: 'Password must be at least 6 characters',
+      confirmPasswordRequired: 'Please confirm password',
+      passwordMismatch: 'Passwords do not match',
+      realNameRequired: 'Please enter contact name',
+      genderRequired: 'Please select gender',
+      phoneRequired: 'Please enter phone number',
+      phoneFormat: 'Please enter correct phone number format',
+      emailRequired: 'Please enter email',
+      emailFormat: 'Please enter correct email format',
+      captchaRequired: 'Please enter verification code',
+      captchaFormat: 'Verification code is 4 digits',
+      agreementRequired: 'Please agree to the Terms of Service and Privacy Policy'
+    },
+    messages: {
+      loginSuccess: 'Login successful',
+      registerSuccess: 'Registration successful, please login',
+      socialLoginNotImplemented: '{provider} login feature not available yet',
+      forgotPasswordNotImplemented: 'Forgot password feature under development...'
+    },
+    tips: {
+      usernameTip: 'Username is for login, supports letters, numbers, underscores and Chinese',
+      realNameTip: 'Please enter your real name for contact'
+    }
   },
 
   // Publish Vehicle
@@ -354,5 +421,11 @@ export default {
     zhHK: '繁體中文',
     enUS: 'English'
   },
-  searchPlaceholder: 'Search brand/model/price'
+  searchPlaceholder: 'Search model like 730',
+
+  // Special Offer Page
+  specialOffer: {
+    title: 'Special Offer Cars + Plates',
+    subtitle: 'Selected special offer vehicles with cross-border plates, don\'t miss out on great deals'
+  }
 }

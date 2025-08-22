@@ -60,6 +60,9 @@ $breakpoint-md: 992px;
 $breakpoint-lg: 1200px;
 $breakpoint-xl: 1920px;
 
+// 特价车样式变量
+$special-offer-color: #f56c6c;
+
 // 响应式混入
 @mixin mobile {
   @media (max-width: #{$breakpoint-sm - 1px}) {
@@ -83,4 +86,16 @@ $breakpoint-xl: 1920px;
   @media (min-width: #{$breakpoint-lg}) {
     @content;
   }
+}
+
+// 特价车通用样式
+.special-offer-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车价格样式（覆盖任何背景色）
+.price-value.special-offer-price,
+.current-price.special-offer-price,
+.car-price.special-offer-price .current-price {
+  color: $special-offer-color !important;
 }

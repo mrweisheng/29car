@@ -144,20 +144,39 @@
                     />
                   </el-form-item>
                   <el-form-item prop="captcha">
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="captcha-container">
                       <el-input
                         v-model="registerForm.captcha"
                         :placeholder="$t('auth.form.captcha')"
                         prefix-icon="Key"
-                        style="flex: 1;"
+                        class="captcha-input"
                       />
                       <div 
-                        v-if="captchaData" 
-                        v-html="captchaData.image" 
+                        v-if="captchaData || captchaLoading" 
+                        class="captcha-image"
                         @click="loadCaptcha"
-                        style="cursor: pointer; border: 1px solid #ddd; border-radius: 4px; padding: 5px; background: white;"
+                        @touchstart="handleCaptchaTouch"
+                        @keydown.enter="loadCaptcha"
+                        @keydown.space="loadCaptcha"
                         :title="$t('auth.button.refreshCaptcha')"
-                      ></div>
+                        role="button"
+                        :aria-label="$t('auth.button.refreshCaptcha')"
+                        tabindex="0"
+                      >
+                        <div v-if="captchaLoading" class="captcha-loading">
+                          <el-icon class="loading-icon"><Loading /></el-icon>
+                          <span class="loading-text">加载中...</span>
+                        </div>
+                        <img 
+                          v-else-if="captchaData.image" 
+                          :src="captchaData.image" 
+                          alt="验证码"
+                          @error="handleCaptchaError"
+                        />
+                        <div v-else class="captcha-placeholder">
+                          {{ $t('auth.button.refreshCaptcha') }}
+                        </div>
+                      </div>
                     </div>
                   </el-form-item>
                   <el-form-item prop="agreement">
@@ -207,6 +226,7 @@ import { ref, reactive, computed, onMounted, onActivated } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -222,6 +242,7 @@ const loading = ref(false)
 const loginFormRef = ref()
 const registerFormRef = ref()
 const captchaData = ref(null)
+const captchaLoading = ref(false)
 
 // 登录表单
 const loginForm = reactive({
@@ -285,7 +306,11 @@ const registerRules = {
   ],
   phone: [
     { required: true, message: t('auth.validation.phoneRequired'), trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: t('auth.validation.phoneFormat'), trigger: 'blur' }
+    { 
+      pattern: /^(1[3-9]\d{9}|\d{8})$/, 
+      message: t('auth.validation.phoneFormat'), 
+      trigger: 'blur' 
+    }
   ],
   captcha: [
     { required: true, message: t('auth.validation.captchaRequired'), trigger: 'blur' },
@@ -311,12 +336,37 @@ const features = ['secure', 'fast', 'support', 'trusted']
 // 获取验证码
 const loadCaptcha = async () => {
   try {
+    captchaLoading.value = true
     const data = await authAPI.getCaptcha()
     captchaData.value = data
   } catch (error) {
     console.error('获取验证码错误:', error)
     ElMessage.error('获取验证码失败')
+  } finally {
+    captchaLoading.value = false
   }
+}
+
+// 处理验证码图片加载错误
+const handleCaptchaError = () => {
+  console.error('验证码图片加载失败')
+  ElMessage.error('验证码图片加载失败，请点击刷新')
+  // 清空当前验证码数据
+  captchaData.value = null
+  // 重新加载验证码
+  loadCaptcha()
+}
+
+
+
+// 处理验证码触摸事件（移动端优化）
+const handleCaptchaTouch = (event) => {
+  // 添加触摸反馈
+  const target = event.currentTarget
+  target.style.transform = 'scale(0.95)'
+  setTimeout(() => {
+    target.style.transform = ''
+  }, 150)
 }
 
 // 切换登录/注册
@@ -327,7 +377,11 @@ const switchToLogin = () => {
 const switchToRegister = async () => {
   isLogin.value = false
   // 切换到注册时获取验证码
-  await loadCaptcha()
+  try {
+    await loadCaptcha()
+  } catch (error) {
+    console.error('切换注册时获取验证码失败:', error)
+  }
 }
 
 // 处理登录
@@ -394,12 +448,20 @@ const handleRegister = async () => {
     // 切换到登录页面
     isLogin.value = true
     // 重新获取验证码
-    await loadCaptcha()
+    try {
+      await loadCaptcha()
+    } catch (error) {
+      console.error('注册成功后重新获取验证码失败:', error)
+    }
   } catch (error) {
     console.error('注册错误:', error)
     ElMessage.error('注册失败，请检查网络连接')
     // 注册失败时重新获取验证码
-    await loadCaptcha()
+    try {
+      await loadCaptcha()
+    } catch (captchaError) {
+      console.error('重新获取验证码失败:', captchaError)
+    }
   } finally {
     loading.value = false
   }
@@ -432,7 +494,13 @@ const scrollToTop = () => {
 onMounted(async () => {
   scrollToTop()
   // 页面加载时获取验证码（用于注册）
-  await loadCaptcha()
+  try {
+    await loadCaptcha()
+  } catch (error) {
+    console.error('初始化验证码失败:', error)
+    // 即使初始化失败，也要设置captchaData为null，这样用户可以手动点击刷新
+    captchaData.value = null
+  }
 })
 
 onActivated(() => {
@@ -594,6 +662,113 @@ onActivated(() => {
     height: 48px;
     font-size: $font-size-medium;
     font-weight: bold;
+  }
+  
+  // 验证码样式
+  .captcha-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    
+    @include mobile {
+      gap: 8px;
+    }
+    
+    .captcha-input {
+      flex: 1;
+    }
+    
+    .captcha-image {
+      cursor: pointer;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px;
+      background: white;
+      min-width: 100px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease, transform 0.15s ease;
+      
+      @include mobile {
+        min-width: 100px;
+        height: 40px;
+        padding: 4px;
+      }
+      
+      &:hover {
+        border-color: $primary-color;
+        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+      
+      &:focus {
+        outline: 2px solid $primary-color;
+        outline-offset: 2px;
+      }
+      
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+      }
+      
+      .captcha-placeholder {
+        color: #909399;
+        font-size: 12px;
+        text-align: center;
+        
+        @include mobile {
+          font-size: 11px;
+        }
+      }
+      
+
+      
+      .captcha-loading {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        
+        .loading-icon {
+          font-size: 20px;
+          color: $primary-color;
+          animation: rotate 1s linear infinite;
+          
+          @include mobile {
+            font-size: 18px;
+          }
+        }
+        
+        .loading-text {
+          font-size: 12px;
+          color: #909399;
+          
+          @include mobile {
+            font-size: 11px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

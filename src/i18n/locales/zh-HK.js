@@ -43,7 +43,7 @@ export default {
 
   // 搜索页面
   search: {
-    placeholder: '請輸入車輛名稱或者型號搜索',
+    placeholder: '請輸入車型搜索如730',
     filterTitle: '篩選條件',
     noResults: '暫無搜索結果',
     resultsFound: '輛車',
@@ -56,6 +56,8 @@ export default {
       priceRangeTitle: '價格範圍',
       year: '年份',
       selectYear: '選擇年份',
+      seats: '座位數',
+      selectSeats: '選擇座位數',
       selectPriceRange: '選擇價格範圍',
       minPrice: '最低價格',
       maxPrice: '最高價格',
@@ -72,7 +74,15 @@ export default {
         '50to100': '50萬-100萬',
         over100: '100萬以上'
       },
+      seats: {
+        all: '不限座位',
+        '5': '5座',
+        '6': '6座',
+        '7': '7座',
+        unknown: '座位未知'
+      },
       resetFilters: '重置篩選',
+      reset: '重置篩選',
       allVehicles: '全部車輛'
     },
     fuelTypes: {
@@ -84,25 +94,30 @@ export default {
     badges: {
       new: '新上架',
       classic: '經典'
-    }
+    },
+    priceNegotiable: '價格面議',
+    specialOfferPrice: 'HKD$98,000（包含車+兩地牌）',
+    unknownVehicle: '未知車型',
+    noContact: '暫無聯繫人',
+    noPhone: '暫無電話'
   },
 
   // 首页
   home: {
     header: {
-      tagline: '易發粵港車'
+      tagline: '明哥粵港車'
     },
     hero: {
-      title: '易發粵港車',
+      title: '明哥粵港車',
       subtitle: '為您提供全方位的粵港車及中港兩地牌服務',
       getStarted: '立即開始',
       learnMore: '了解更多',
       sellCar: '寄售車輛',
       browseCars: '瀏覽車輛',
       stats: {
-        vehicles: '車輛',
-        users: '用戶',
-        deals: '交易'
+        years: '年經營歷史',
+        customers: '服務客戶',
+        transactions: '成功交易'
       }
     },
     features: {
@@ -126,6 +141,10 @@ export default {
     },
     featured: {
       title: '精選車輛',
+      viewAll: '查看全部'
+    },
+    specialOffer: {
+      title: '特價車輛',
       viewAll: '查看全部'
     },
     latest: {
@@ -176,6 +195,25 @@ export default {
       searchMore: '搜索更多',
       searchMoreDesc: '探索更多車輛選擇，找到完美座駕'
     },
+    // 手機版分類卡片
+    mobileCategory: {
+      searchCars: {
+        title: '个人搵車',
+        description: '搵心水車輛，幫您快手搵到啱心水嘅座駕'
+      },
+      crossBorder: {
+        title: '中港两地牌',
+        description: '專業辦理中港兩地牌照，方便您往返兩地'
+      },
+      specialOffer: {
+        title: '特價車+牌組合',
+        description: '精選特價車連牌組合，優惠唔好錯過'
+      },
+      vehicleRegistration: {
+        title: '登記車',
+        description: '專業車輛登記，手續簡單快捷'
+      }
+    },
     stats: {
       satisfiedCustomers: '滿意客戶',
       serviceVehicles: '服務車輛',
@@ -187,69 +225,71 @@ export default {
   // 关于我们
   about: {
     title: '關於我們',
-    subtitle: '了解易發粵港車的故事和使命',
+    subtitle: '專注中港車輛服務，您的信譽之選',
     story: {
-      title: '關於我們 - 42年沉澱，信譽為本',
-      content1: '始於1982，我們更懂您的託付。自1982年創立，易發粵港車已服務中港客戶42年。我們不是一家新興的諮詢公司，而是一家有深厚根基的香港實體車行。',
-      content2: '我們深知，一輛合適的車對您而言，是事業的助力，是時間的價值，更是身份的象徵。42年來，我們只堅守一個信條：「受人之託，忠人之事」。選擇易發粵港車，就是選擇一份歷經時間考驗的安心。',
+              title: '明哥粵港車 - 專注中港車輛服務',
+              content1: '始於1982，我們更懂您的託付。自1982年創立，明哥粵港車已專注中港車輛服務多年。我們不是一家新興的諮詢公司，而是一家有深厚根基的香港實體車行。',
+              content2: '我們深知，一張粵Z中港兩地牌對您而言，是事業的助力，是時間的價值，更是身份的象徵。多年來，我們只堅守一個信條：「受人之託，忠人之事」。選擇明哥粵港車，就是選擇一份歷經時間考驗的安心。',
       officeEnvironment: '公司辦公環境'
     },
-    values: {
-      title: '核心價值觀',
+    advantages: {
+      title: '核心優勢',
+      experience: {
+        title: '多年專業經驗',
+        description: '專注中港車輛服務多年，信譽為本，專業可靠'
+      },
+      entity: {
+        title: '香港實體車行',
+        description: '上水馬會道3號，隨時歡迎實地考察，合作更放心'
+      },
+      service: {
+        title: '一站式VIP服務',
+        description: '從資質評估到成功上牌，全程專業代辦，讓您省心省力'
+      }
+    },
+    commitments: {
+      title: '服務承諾',
+      guarantee: {
+        title: '結果保障',
+        description: '不成功，全額退款。您的託付，我們用最實際的行動來保障'
+      },
       professional: {
         title: '專業服務',
-        description: '提供專業、可靠的汽車服務，確保客戶滿意度'
-      },
-      customerFirst: {
-        title: '客戶至上',
-        description: '以客戶需求為中心，提供個性化的服務方案'
-      },
-      efficient: {
-        title: '高效便捷',
-        description: '利用現代技術，提供高效便捷的服務體驗'
-      },
-      safe: {
-        title: '安全可靠',
-        description: '確保服務的安全性和可靠性，讓客戶放心'
-      },
-      innovative: {
-        title: '創新進取',
-        description: '持續創新服務模式，引領行業發展趨勢'
-      },
-      integrity: {
-        title: '誠信經營',
-        description: '堅持誠信為本，建立長期信任關係'
+        description: '1對1資質評估，全程材料代辦，確保高通過率'
       }
     },
-    team: {
-      title: '我們的團隊',
-      members: {
-        manager: {
-          name: '張經理',
-          position: '總經理',
-          description: '擁有15年汽車行業經驗，專注於客戶服務優化'
-        },
-        engineer: {
-          name: '李工程師',
-          position: '技術總監',
-          description: '資深汽車技術專家，負責技術團隊管理'
-        },
-        consultant: {
-          name: '王顧問',
-          position: '客戶服務總監',
-          description: '專注於客戶體驗提升，確保服務質量'
-        }
+    services: {
+      title: '服務內容',
+        description: '您將獲得由明哥粵港車資深團隊提供的「一站式」專屬服務',
+      list: {
+        assessment: '1對1資質評估與優化建議',
+        materials: '全程材料代辦服務',
+        qualification: '企業資格配置',
+        government: '全流程政府事務代辦',
+        accompany: '專人VIP陪同服務',
+        lifetime: '終身顧問服務'
       }
     },
-    service: {
-      title: '專業服務',
-      description: '我們提供專業的汽車服務，從銷售到售後，全程為您保駕護航。憑藉多年的行業經驗和專業團隊，確保每一位客戶都能享受到優質的服務體驗。'
+    contact: {
+      title: '聯繫我們',
+      address: {
+        title: '公司地址',
+        value: '上水馬會道3號'
+      },
+      phone: {
+        title: '聯繫電話',
+        value: '98702065'
+      },
+      wechat: {
+        title: '微信聯繫',
+        value: '請添加微信諮詢'
+      }
     }
   },
 
   // 页脚
   footer: {
-    platform: '易發粵港車',
+            platform: '明哥粵港車',
     services: '服務',
     about: '關於我們',
     carPurchase: '汽車購買',
@@ -282,41 +322,68 @@ export default {
   // 认证
   auth: {
     title: '登錄註冊',
-    subtitle: '歡迎來到易發粵港車，請登錄或註冊您的賬戶',
-    login: '登錄',
-    register: '註冊',
-    username: '用戶名',
-    password: '密碼',
-    confirmPassword: '確認密碼',
-    realName: '聯絡人姓名',
-    realNameTip: '請輸入您的真實姓名，用於聯絡',
-    nickname: '網名',
-    gender: '性別',
-    male: '男',
-    female: '女',
-    other: '其他',
-    phone: '手機號碼',
-    email: '電子郵箱',
-    captcha: '驗證碼',
-    usernameRequired: '請輸入用戶名',
-    usernameMinLength: '用戶名至少3個字符',
-    passwordRequired: '請輸入密碼',
-    passwordMinLength: '密碼至少6個字符',
-    confirmPasswordRequired: '請確認密碼',
-    passwordMismatch: '兩次輸入的密碼不一致',
-    realNameRequired: '請輸入聯絡人姓名',
-    nicknameRequired: '請輸入網名',
-    genderRequired: '請選擇性別',
-    phoneRequired: '請輸入手機號碼',
-    phoneFormat: '請輸入正確的手機號碼格式',
-    emailRequired: '請輸入電子郵箱',
-    emailFormat: '請輸入正確的郵箱格式',
-    captchaRequired: '請輸入驗證碼',
-    captchaFormat: '驗證碼為4位數字',
-    loginSuccess: '登錄成功',
-    registerSuccess: '註冊成功，請登錄',
-    usernameTip: '用戶名用於登錄，只支持字母和數字',
-    nicknameTip: '網名將顯示在網站上，可為中文或英文暱稱'
+            subtitle: '歡迎來到明哥粵港車，請登錄或註冊您的賬戶',
+    login: {
+      title: '登錄'
+    },
+    register: {
+      title: '註冊'
+    },
+    form: {
+      email: '電子郵箱/用戶名',
+      password: '密碼',
+      confirmPassword: '確認密碼',
+      username: '用戶名',
+      realName: '聯絡人姓名',
+      gender: '性別',
+      phone: '手機號碼',
+      captcha: '驗證碼',
+      remember: '記住我',
+      forgotPassword: '忘記密碼？',
+      agreement: {
+        prefix: '我已閱讀並同意',
+        terms: '服務條款',
+        and: '和',
+        privacy: '隱私政策'
+      }
+    },
+    button: {
+      login: '登錄',
+      register: '註冊',
+      refreshCaptcha: '刷新驗證碼'
+    },
+    gender: {
+      male: '男',
+      female: '女',
+      other: '其他'
+    },
+    validation: {
+      usernameRequired: '請輸入用戶名',
+      usernameMinLength: '用戶名至少3個字符',
+      passwordRequired: '請輸入密碼',
+      passwordMinLength: '密碼至少6個字符',
+      confirmPasswordRequired: '請確認密碼',
+      passwordMismatch: '兩次輸入的密碼不一致',
+      realNameRequired: '請輸入聯絡人姓名',
+      genderRequired: '請選擇性別',
+      phoneRequired: '請輸入手機號碼',
+      phoneFormat: '請輸入正確的手機號碼格式',
+      emailRequired: '請輸入電子郵箱',
+      emailFormat: '請輸入正確的郵箱格式',
+      captchaRequired: '請輸入驗證碼',
+      captchaFormat: '驗證碼為4位數字',
+      agreementRequired: '請同意服務條款和隱私政策'
+    },
+    messages: {
+      loginSuccess: '登錄成功',
+      registerSuccess: '註冊成功，請登錄',
+      socialLoginNotImplemented: '{provider} 登錄功能暫未開放',
+      forgotPasswordNotImplemented: '忘記密碼功能開發中...'
+    },
+    tips: {
+      usernameTip: '用戶名用於登錄，僅支持字母、數字、下劃線和中文',
+      realNameTip: '請輸入您的真實姓名，用於聯絡'
+    }
   },
 
   // 發布車輛
@@ -363,5 +430,11 @@ export default {
     zhHK: '繁體中文',
     enUS: 'English'
   },
-  searchPlaceholder: '請輸入車輛名稱或者型號搜索'
+  searchPlaceholder: '請輸入車型搜索如730',
+
+  // 特价车辆专门页面
+  specialOffer: {
+    title: '特價車+牌組合',
+    subtitle: '精選特價車輛，包含中港兩地牌，優惠唔好錯過'
+  }
 }

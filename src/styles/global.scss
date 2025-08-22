@@ -14,6 +14,7 @@ html, body {
   line-height: 1.5;
   color: $text-primary;
   background-color: $background-color-base;
+  touch-action: manipulation; // 禁用双击缩放
 }
 
 /* 滚动行为优化 */
@@ -100,6 +101,58 @@ body {
   justify-content: space-between;
 }
 
+// 特价车通用样式（全局覆盖）
+.special-offer-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车价格样式（覆盖任何背景色）
+.price-value.special-offer-price,
+.current-price.special-offer-price,
+.car-price.special-offer-price .current-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车样式（最高优先级，覆盖所有页面的蓝色样式）
+.car-price.special-offer-price .current-price,
+.car-price.special-offer-price .price,
+.price-value.special-offer-price,
+.current-price.special-offer-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车样式（使用更具体的选择器，确保最高优先级）
+body .car-price.special-offer-price .current-price,
+body .car-price.special-offer-price .price,
+body .price-value.special-offer-price,
+body .current-price.special-offer-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车样式（使用更具体的选择器，确保覆盖所有情况）
+html body .car-price.special-offer-price .current-price,
+html body .car-price.special-offer-price .price,
+html body .price-value.special-offer-price,
+html body .current-price.special-offer-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车样式（最终解决方案，使用最高优先级选择器）
+#app .car-price.special-offer-price .current-price,
+#app .car-price.special-offer-price .price,
+#app .price-value.special-offer-price,
+#app .current-price.special-offer-price {
+  color: $special-offer-color !important;
+}
+
+// 特价车样式（终极解决方案，使用最具体的选择器）
+#app html body .car-price.special-offer-price .current-price,
+#app html body .car-price.special-offer-price .price,
+#app html body .price-value.special-offer-price,
+#app html body .current-price.special-offer-price {
+  color: $special-offer-color !important;
+}
+
 .flex-column {
   display: flex;
   flex-direction: column;
@@ -154,4 +207,4 @@ body {
 
 .slide-leave-to {
   transform: translateX(100%);
-} 
+}
