@@ -540,6 +540,7 @@ import { Calendar, Tickets, User as UserIcon, Cpu, Setting } from '@element-plus
 import { useUserStore } from '@/stores/user'
 
 import { vehicleAPI } from '@/utils/api'
+import { getImageUrl } from '@/config/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -671,7 +672,7 @@ const processVehicleData = (vehicles) => {
       originalPrice: vehicle.original_price || '',
       // 选择第一张图片（避免随机选择导致的重复计算）
       image: vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
-        ? vehicle.images[0].image_url || vehicle.images[0]
+        ? getImageUrl(vehicle.images[0].image_url || vehicle.images[0])
         : null,
       // 联系人信息
       contactName: vehicle.contact_name || '暫無聯繫人',
@@ -889,7 +890,7 @@ async function loadFullDetailData(vehicleId, retryCount = 0) {
         contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
         phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
         contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
-        images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
+        images: rawData.images?.map(img => getImageUrl(typeof img === 'string' ? img : img.image_url)) || []
       }
       // 使用JSON深拷贝避免响应式问题
       detailData.value = JSON.parse(JSON.stringify(transformedData))
@@ -952,7 +953,7 @@ async function openDetailDrawer(vehicleId, retryCount = 0) {
         contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
         phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
         contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
-        images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
+        images: rawData.images?.map(img => getImageUrl(typeof img === 'string' ? img : img.image_url)) || []
       }
       // 使用JSON深拷贝避免响应式问题
       detailData.value = JSON.parse(JSON.stringify(transformedData))

@@ -108,7 +108,7 @@
             >
               <div class="car-image">
                 <img 
-                  :src="car.images && car.images.length > 0 ? car.images[0].image_url : '/default-car.jpg'" 
+                  :src="getCarImageUrl(car)" 
                   :alt="`${car.car_brand} ${car.car_model}`" 
                   @error="handleImageError"
                   @load="handleImageLoad"
@@ -191,7 +191,7 @@
             >
               <div class="car-image">
                 <img 
-                  :src="car.images && car.images.length > 0 ? car.images[0].image_url : '/default-car.jpg'" 
+                  :src="getCarImageUrl(car)" 
                   :alt="`${car.car_brand} ${car.car_model}`" 
                   @error="handleImageError"
                   @load="handleImageLoad"
@@ -281,7 +281,7 @@
             >
               <div class="car-image">
                 <img 
-                  :src="car.images && car.images.length > 0 ? car.images[0].image_url : '/default-car.jpg'" 
+                  :src="getCarImageUrl(car)" 
                   :alt="`${car.car_brand} ${car.car_model}`" 
                   @error="handleImageError"
                   @load="handleImageLoad"
@@ -401,6 +401,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { Van, Box, Bicycle, Star, Search, Phone, Lock, Setting, User, Wallet, ChatDotRound, Message, Close, Calendar, Tickets, Cpu, Plus, ArrowRight, Loading, Document } from '@element-plus/icons-vue'
 import { vehicleAPI } from '@/utils/api'
+import { getImageUrl } from '@/config/api'
 import VehicleDetailDrawer from '@/components/VehicleDetailDrawer.vue'
 
 const { t } = useI18n()
@@ -429,6 +430,14 @@ const searchKeyword = ref('')
 // 事件處理
 
 const handleSellCar = () => {
+  // 检查用户是否已登录
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录后再发布车辆')
+    router.push({ path: '/auth' })
+    return
+  }
+  
+  // 已登录用户可以进入发布页面
   router.push({ path: '/publish' })
 }
 
@@ -566,6 +575,14 @@ const formatSeats = (seats) => {
   }
   
   return seats
+}
+
+// 获取车辆图片URL
+const getCarImageUrl = (car) => {
+  const imageUrl = car.images && car.images.length > 0
+    ? car.images[0].image_url
+    : '/default-car.jpg'
+  return getImageUrl(imageUrl)
 }
 
 // 图片加载失败处理
@@ -708,7 +725,7 @@ const openDetailDrawer = async (vehicleId) => {
         contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
         phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
         contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
-        images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
+        images: rawData.images?.map(img => getImageUrl(typeof img === 'string' ? img : img.image_url)) || []
       }
       console.log('🎯 Home页面 - 转换后的数据:', transformedData)
       // 使用JSON深拷贝避免响应式问题

@@ -40,7 +40,17 @@ const routes = [
     name: 'Publish',
     component: () => import('@/views/Publish.vue'),
     meta: {
-      title: 'publish.title'
+      title: 'publish.title',
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/my-vehicles',
+    name: 'MyVehicles',
+    component: () => import('@/views/MyVehicles.vue'),
+    meta: {
+      title: '我的车辆',
+      requiresAuth: true
     }
   },
   {
@@ -95,13 +105,25 @@ router.beforeEach((to, from, next) => {
       'auth.title': '登錄註冊',
       'publish.title': '發佈車輛',
       'vehicleDetail.title': '車輛詳情',
-      'specialOffer.title': '特價車+牌組合'
+      'specialOffer.title': '特價車+牌組合',
+      '我的车辆': '我的车辆'
     }
     const title = titleMap[to.meta.title] || to.meta.title
-          document.title = `${title} - 明哥粤港车`
+    document.title = `${title} - 明哥粤港车`
   }
   
-
+  // 检查需要认证的路由
+  if (to.meta.requiresAuth) {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      // 未登录，跳转到登录页面
+      next({
+        path: '/auth',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
+  }
   
   next()
 })

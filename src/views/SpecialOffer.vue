@@ -39,7 +39,7 @@
             >
               <div class="car-image">
                 <img 
-                  :src="car.images && car.images.length > 0 ? car.images[0].image_url : '/default-car.jpg'" 
+                  :src="getCarImageUrl(car)" 
                   :alt="`${car.car_brand} ${car.car_model}`" 
                   @error="handleImageError"
                   @load="handleImageLoad"
@@ -99,6 +99,7 @@ import { ElMessage } from 'element-plus'
 import AppHeader from '@/components/AppHeader.vue'
 import { Star, Phone, Loading } from '@element-plus/icons-vue'
 import { vehicleAPI } from '@/utils/api'
+import { getImageUrl } from '@/config/api'
 import VehicleDetailDrawer from '@/components/VehicleDetailDrawer.vue'
 import { useUserStore } from '@/stores/user'
 
@@ -154,6 +155,14 @@ const formatSeats = (seats) => {
   }
   
   return seats
+}
+
+// 获取车辆图片URL
+const getCarImageUrl = (car) => {
+  const imageUrl = car.images && car.images.length > 0
+    ? car.images[0].image_url
+    : '/default-car.jpg'
+  return getImageUrl(imageUrl)
 }
 
 // 格式化价格显示
@@ -272,7 +281,7 @@ const openDetailDrawer = async (vehicleId) => {
         contact_name: isMinggeUser.value ? rawData.contact_name : '明哥',
         phone_number: isMinggeUser.value ? rawData.phone_number : '98702065',
         contact_phone: isMinggeUser.value ? (rawData.phone_number || rawData.contact_phone) : '98702065',
-        images: rawData.images?.map(img => typeof img === 'string' ? img : img.image_url) || []
+        images: rawData.images?.map(img => getImageUrl(typeof img === 'string' ? img : img.image_url)) || []
       }
       console.log('🎯 SpecialOffer页面 - 转换后的数据:', transformedData)
       // 使用JSON深拷贝避免响应式问题

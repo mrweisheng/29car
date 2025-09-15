@@ -65,7 +65,7 @@
               :class="{ active: index === currentImageIndex }"
               @click="currentImageIndex = index"
             >
-              <el-image :src="image.image_url" fit="cover">
+              <el-image :src="getImageUrl(image.image_url)" fit="cover">
                 <template #error>
                   <div class="thumbnail-error">
                     <el-icon><Picture /></el-icon>
@@ -200,6 +200,7 @@ import { Picture, User, Phone, ChatDotRound, ArrowLeft } from '@element-plus/ico
 import AppHeader from '@/components/AppHeader.vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
+import { getImageUrl } from '@/config/api'
 
 export default {
   name: 'VehicleDetail',
@@ -224,14 +225,15 @@ export default {
     // 计算属性
     const currentImage = computed(() => {
       if (!vehicle.value?.images || vehicle.value.images.length === 0) {
-        return '/default-car.jpg'
+        return getImageUrl('/default-car.jpg')
       }
-      return vehicle.value.images[currentImageIndex.value]?.image_url || '/default-car.jpg'
+      const imageUrl = vehicle.value.images[currentImageIndex.value]?.image_url || '/default-car.jpg'
+      return getImageUrl(imageUrl)
     })
     
     const imageList = computed(() => {
-      if (!vehicle.value?.images) return ['/default-car.jpg']
-      return vehicle.value.images.map(img => img.image_url)
+      if (!vehicle.value?.images) return [getImageUrl('/default-car.jpg')]
+      return vehicle.value.images.map(img => getImageUrl(img.image_url))
     })
     
     // 用户状态管理

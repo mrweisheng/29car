@@ -187,6 +187,45 @@ export const vehicleAPI = {
   // 获取特价车辆
   getSpecialOfferVehicles() {
     return api.get('/vehicles/special-offers')
+  },
+
+  // 车辆发布相关API
+  // 发布车辆
+  publishVehicle(formData) {
+    return api.post('/vehicles/publish', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  // 保存车辆草稿
+  saveDraft(data) {
+    return api.post('/vehicles/draft', data)
+  },
+
+  // 获取我的车辆列表
+  getMyVehicles(params = {}) {
+    return api.get('/vehicles/my-vehicles', { params })
+  },
+
+  // 更新车辆信息
+  updateVehicle(vehicleId, data) {
+    return api.put(`/vehicles/${vehicleId}`, data)
+  },
+
+  // 删除车辆
+  deleteVehicle(vehicleId) {
+    return api.delete(`/vehicles/${vehicleId}`)
+  },
+
+  // 为车辆添加图片
+  addVehicleImages(vehicleId, formData) {
+    return api.post(`/vehicles/${vehicleId}/images`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   }
 }
 

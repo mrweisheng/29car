@@ -51,6 +51,14 @@
             >
               {{ $t('nav.publish') }}
             </div>
+            <div 
+              v-if="userStore.isLoggedIn"
+              class="mobile-nav-item"
+              :class="{ 'active': $route.path === '/my-vehicles' }"
+              @click="handleNavigation('/my-vehicles')"
+            >
+              我的车辆
+            </div>
           </div>
         </div>
       </div>
@@ -65,6 +73,14 @@
         <div class="nav-item" :class="{ 'active': $route.path === '/search' }" @click="handleNavigation('/search')">{{ $t('nav.search') }}</div>
         <div class="nav-item" :class="{ 'active': $route.path === '/about' }" @click="handleNavigation('/about')">{{ $t('nav.about') }}</div>
         <div class="nav-item" :class="{ 'active': $route.path === '/publish' }" @click="handleNavigation('/publish')">{{ $t('nav.publish') }}</div>
+        <div 
+          v-if="userStore.isLoggedIn"
+          class="nav-item" 
+          :class="{ 'active': $route.path === '/my-vehicles' }" 
+          @click="handleNavigation('/my-vehicles')"
+        >
+          我的车辆
+        </div>
       </nav>
       
       <div class="header-actions">
@@ -86,6 +102,10 @@
             </div>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="my-vehicles">
+                  <el-icon><Van /></el-icon>
+                  我的车辆
+                </el-dropdown-item>
                 <el-dropdown-item command="logout">
                   <el-icon><SwitchButton /></el-icon>
                   {{ $t('common.logout') }}
@@ -138,6 +158,8 @@ const handleUserCommand = (command) => {
   if (command === 'logout') {
     userStore.logout()
     router.push('/')
+  } else if (command === 'my-vehicles') {
+    handleNavigation('/my-vehicles')
   }
 }
 

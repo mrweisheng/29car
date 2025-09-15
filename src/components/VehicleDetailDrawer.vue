@@ -297,6 +297,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Close, Van, Phone, Calendar, Cpu, User as UserIcon, ChatDotRound } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { getImageUrl } from '@/config/api'
 
 const props = defineProps({
   visible: {
@@ -456,9 +457,10 @@ const currentImage = computed(() => {
   })
   if (!props.data?.images?.length) {
     console.log('🖼️ 没有图片，使用默认图片')
-    return '/default-car.jpg'
+    return getImageUrl('/default-car.jpg')
   }
-  const result = props.data.images[props.imageIndex] || props.data.images[0] || '/default-car.jpg'
+  const imageUrl = props.data.images[props.imageIndex] || props.data.images[0] || '/default-car.jpg'
+  const result = getImageUrl(imageUrl)
   console.log('🖼️ 当前图片结果:', result)
   return result
 })
