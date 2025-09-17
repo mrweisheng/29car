@@ -75,10 +75,6 @@
               </div>
               
               <div class="vehicle-actions">
-                <el-button size="small" @click="editVehicle(vehicle)">
-                  <el-icon><Edit /></el-icon>
-                  编辑
-                </el-button>
                 <el-button 
                   size="small" 
                   :type="vehicle.publish_status === 1 ? 'warning' : 'success'"
@@ -100,8 +96,21 @@
           </div>
         </div>
 
-        <!-- 分页 -->
-        <div class="pagination-wrapper" v-if="pagination.total > 0">
+        <!-- 加载更多状态 -->
+        <div v-if="loadingMore" class="loading-more">
+          <div class="loading-more-content">
+            <el-icon class="loading-icon"><Loading /></el-icon>
+            <span class="loading-text">正在加载更多车辆...</span>
+          </div>
+        </div>
+
+        <!-- 没有更多数据提示 -->
+        <div v-if="!loading && !loadingMore && vehicles.length > 0 && !pagination.has_next" class="no-more-data">
+          <div class="no-more-text">没有更多数据了</div>
+        </div>
+
+        <!-- 分页（桌面端） -->
+        <div class="pagination-wrapper" v-if="pagination.total > 0 && !isMobile">
           <el-pagination
             v-model:current-page="pagination.current_page"
             v-model:page-size="pagination.per_page"
@@ -118,19 +127,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete, Switch, Phone } from '@element-plus/icons-vue'
+import { Plus, Delete, Switch, Phone, Loading } from '@element-plus/icons-vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { vehicleAPI } from '@/utils/api'
 import { getImageUrl } from '@/config/api'
 
 const router = useRouter()
 
+// 移动端检测
+const isMobile = ref(window.innerWidth <= 768)
+
 // 数据状态
 const vehicles = ref([])
 const loading = ref(false)
+const loadingMore = ref(false)
 const filterStatus = ref('')
 const filterType = ref('')
 
@@ -139,15 +152,23 @@ const pagination = reactive({
   current_page: 1,
   per_page: 20,
   total: 0,
-  total_pages: 0
+  total_pages: 0,
+  has_next: false
 })
 
 // 加载车辆列表
-const loadVehicles = async () => {
-  loading.value = true
+const loadVehicles = async (isLoadMore = false) => {
+  if (isLoadMore) {
+    if (!pagination.has_next) return
+    loadingMore.value = true
+  } else {
+    loading.value = true
+    pagination.current_page = 1
+  }
+  
   try {
     const params = {
-      page: pagination.current_page,
+      page: isLoadMore ? pagination.current_page + 1 : pagination.current_page,
       limit: pagination.per_page,
       sort_by: 'created_at',
       sort_order: 'DESC'
@@ -162,7 +183,14 @@ const loadVehicles = async () => {
     }
     
     const response = await vehicleAPI.getMyVehicles(params)
-    vehicles.value = response.vehicles || []
+    
+    if (isLoadMore) {
+      // 加载更多时追加数据
+      vehicles.value = [...vehicles.value, ...(response.vehicles || [])]
+    } else {
+      // 首次加载或筛选时替换数据
+      vehicles.value = response.vehicles || []
+    }
     
     // 更新分页信息
     if (response.pagination) {
@@ -174,6 +202,7 @@ const loadVehicles = async () => {
     ElMessage.error('加载车辆列表失败')
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
@@ -239,12 +268,6 @@ const handleImageError = (event) => {
 // 跳转到发布页面
 const goToPublish = () => {
   router.push({ path: '/publish' })
-}
-
-// 编辑车辆
-const editVehicle = (vehicle) => {
-  // 这里可以跳转到编辑页面，或者在当前页面打开编辑对话框
-  ElMessage.info('编辑功能开发中...')
 }
 
 // 切换车辆状态
@@ -315,9 +338,57 @@ const handleCurrentChange = (val) => {
   loadVehicles()
 }
 
+// 滚动监听器
+let scrollTimeout = null
+
+const handleScroll = () => {
+  if (!isMobile.value || loadingMore.value || !pagination.has_next) {
+    return
+  }
+  
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+  
+  scrollTimeout = setTimeout(() => {
+    const { scrollTop, scrollHeight, clientHeight } = document.documentElement
+    
+    if (scrollTop + clientHeight >= scrollHeight - 200) {
+      loadMore()
+    }
+  }, 200)
+}
+
+const loadMore = () => {
+  if (loadingMore.value || !pagination.has_next) return
+  loadVehicles(true)
+}
+
+// 窗口大小变化处理
+const handleResize = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
 // 页面加载时获取数据
 onMounted(() => {
   loadVehicles()
+  
+  // 添加滚动监听器
+  if (isMobile.value) {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+  }
+  
+  // 添加窗口大小变化监听器
+  window.addEventListener('resize', handleResize)
+})
+
+// 清理监听器
+onUnmounted(() => {
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+  window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -326,7 +397,7 @@ onMounted(() => {
 
 .my-vehicles-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, $primary-color 0%, color-mix(in srgb, $primary-color 80%, white) 100%);
   padding-top: 80px;
 }
 
@@ -487,9 +558,19 @@ onMounted(() => {
   border-top: 1px solid #f0f0f0;
   display: flex;
   gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
   
-  .el-button {
+  // 重置所有按钮的默认样式
+  :deep(.el-button) {
     flex: 1;
+    margin: 0 !important; // 强制移除所有margin
+    height: 32px;
+    
+    // 确保按钮内容居中对齐
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -504,6 +585,63 @@ onMounted(() => {
   margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid #e4e7ed;
+}
+
+// 加载更多样式
+.loading-more {
+  padding: 20px;
+  text-align: center;
+  
+  .loading-more-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #909399;
+    
+    .loading-icon {
+      animation: rotate 1s linear infinite;
+      font-size: 18px;
+    }
+    
+    .loading-text {
+      font-size: 14px;
+    }
+  }
+}
+
+.no-more-data {
+  padding: 20px;
+  text-align: center;
+  
+  .no-more-text {
+    color: #909399;
+    font-size: 14px;
+    border-top: 1px solid #e4e7ed;
+    padding-top: 20px;
+    margin: 0 20px;
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 1px;
+      background: #909399;
+    }
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // 响应式设计
@@ -545,9 +683,13 @@ onMounted(() => {
   
   .vehicle-actions {
     flex-direction: column;
+    gap: 8px;
     
-    .el-button {
+    :deep(.el-button) {
       width: 100%;
+      flex: none;
+      margin: 0 !important; // 移动端也强制移除margin
+      height: 40px; // 移动端按钮稍微高一些
     }
   }
 }

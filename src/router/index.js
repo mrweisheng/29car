@@ -123,6 +123,28 @@ router.beforeEach((to, from, next) => {
       })
       return
     }
+
+    // 验证 token 是否有效（检查 token 格式和过期时间）
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1]))
+      if (tokenData.exp && tokenData.exp * 1000 < Date.now()) {
+        // token 过期，清除并跳转到登录页面
+        localStorage.removeItem('token')
+        next({
+          path: '/auth',
+          query: { redirect: to.fullPath }
+        })
+        return
+      }
+    } catch (error) {
+      // token 格式错误，清除并跳转到登录页面
+      localStorage.removeItem('token')
+      next({
+        path: '/auth',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
   }
   
   next()

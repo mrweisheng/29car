@@ -7,92 +7,170 @@
         <p class="page-subtitle">轻松发布您的车辆信息，快速找到买家</p>
       </div>
       
-      <div class="publish-content">
+      <div class="vehicles-content">
         <el-card class="publish-card">
-          <el-form 
-            ref="formRef" 
-            :model="formData" 
-            :rules="formRules" 
-            label-width="120px"
+          <el-form
+            ref="formRef"
+            :model="formData"
+            :rules="formRules"
+            :label-width="isMobile ? 'auto' : '120px'"
+            :label-position="isMobile ? 'top' : 'right'"
             class="publish-form"
           >
             <!-- 基本信息 -->
             <div class="form-section">
               <h3 class="section-title">基本信息</h3>
-              
-              <el-row :gutter="20">
-                <el-col :span="12">
+
+              <!-- 第一行：PC端(车辆品牌+车辆型号+年份) 移动端(车辆品牌单独一行) -->
+              <el-row :gutter="isMobile ? 0 : 20">
+                <el-col :span="isMobile ? 24 : 8">
                   <el-form-item label="车辆品牌" prop="car_brand">
-                    <el-select 
-                      v-model="formData.car_brand" 
+                    <el-select
+                      v-model="formData.car_brand"
                       placeholder="请选择车辆品牌"
                       clearable
                       filterable
                     >
-                      <el-option 
-                        v-for="brand in brandsList" 
-                        :key="brand.value" 
-                        :label="brand.label" 
+                      <el-option
+                        v-for="brand in brandsList"
+                        :key="brand.value"
+                        :label="brand.label"
                         :value="brand.value"
                       />
                     </el-select>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="isMobile ? 0 : 8" v-if="!isMobile">
                   <el-form-item label="车辆型号" prop="car_model">
-                    <el-input 
-                      v-model="formData.car_model" 
-                      placeholder="请输入车辆型号，如：卡罗拉"
+                    <el-input
+                      v-model="formData.car_model"
+                      placeholder="如 E300"
                       clearable
                     />
                   </el-form-item>
                 </el-col>
-              </el-row>
-
-              <el-row :gutter="20">
-                <el-col :span="12">
+                <el-col :span="isMobile ? 0 : 8" v-if="!isMobile">
                   <el-form-item label="年份" prop="year">
-                    <el-select 
-                      v-model="formData.year" 
+                    <el-select
+                      v-model="formData.year"
                       placeholder="请选择年份"
                       clearable
-                      filterable
                     >
-                      <el-option 
-                        v-for="year in yearOptions" 
-                        :key="year.value" 
-                        :label="year.label" 
-                        :value="year.value"
+                      <el-option
+                        v-for="year in yearsList"
+                        :key="year"
+                        :label="year"
+                        :value="year"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <!-- 移动端：车辆型号和传动方式同一行 -->
+              <el-row :gutter="16" v-if="isMobile">
+                <el-col :span="12">
+                  <el-form-item label="车辆型号" prop="car_model">
+                    <el-input
+                      v-model="formData.car_model"
+                      placeholder="请输入车辆型号"
+                      clearable
+                    />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="传动方式" prop="transmission">
+                    <el-select
+                      v-model="formData.transmission"
+                      placeholder="请选择传动方式"
+                      clearable
+                    >
+                      <el-option label="自动波 AT" value="自动波 AT" />
+                      <el-option label="棍波 MT" value="棍波 MT" />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <!-- 移动端：年份和车辆类型同一行 -->
+              <el-row :gutter="16" v-if="isMobile">
+                <el-col :span="12">
+                  <el-form-item label="年份" prop="year">
+                    <el-select
+                      v-model="formData.year"
+                      placeholder="请选择年份"
+                      clearable
+                    >
+                      <el-option
+                        v-for="year in yearsList"
+                        :key="year"
+                        :label="year"
+                        :value="year"
                       />
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="价格" prop="price">
-                    <el-input 
-                      v-model="formData.price" 
-                      placeholder="请输入价格，如：15万 或 150000"
+                  <el-form-item label="车辆类型" prop="car_type">
+                    <el-select
+                      v-model="formData.car_type"
+                      placeholder="私家车"
                       clearable
-                    />
+                    >
+                      <el-option label="私家车" value="私家车" />
+                      <el-option label="商务车" value="商务车" />
+                      <el-option label="货车" value="货车" />
+                      <el-option label="客车" value="客车" />
+                    </el-select>
                   </el-form-item>
                 </el-col>
               </el-row>
 
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="车辆类型" prop="vehicle_type">
-                    <el-select v-model="formData.vehicle_type" placeholder="请选择车辆类型" clearable>
-                      <el-option label="私家车" :value="1" />
-                      <el-option label="客货车" :value="2" />
-                      <el-option label="货车" :value="3" />
-                      <el-option label="电单车" :value="4" />
-                      <el-option label="经典车" :value="5" />
+              <!-- 第二行：PC端(价格+车辆类型+燃料类型) 移动端(价格+座位数) -->
+              <el-row :gutter="isMobile ? 0 : 20">
+                <el-col :span="isMobile ? 12 : 8">
+                  <el-form-item label="价格" prop="price">
+                    <el-input
+                      v-model="formData.price"
+                      placeholder="如 150000"
+                      clearable
+                    />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="isMobile ? 12 : 8">
+                  <el-form-item :label="isMobile ? '座位数' : '车辆类型'" :prop="isMobile ? 'seats' : 'car_type'">
+                    <el-select
+                      v-if="isMobile"
+                      v-model="formData.seats"
+                      placeholder="请选择座位数"
+                      clearable
+                    >
+                      <el-option label="2座" value="2" />
+                      <el-option label="4座" value="4" />
+                      <el-option label="5座" value="5" />
+                      <el-option label="7座" value="7" />
+                      <el-option label="8座及以上" value="8+" />
+                    </el-select>
+                    <el-select
+                      v-else
+                      v-model="formData.car_type"
+                      placeholder="私家车"
+                      clearable
+                    >
+                      <el-option label="私家车" value="私家车" />
+                      <el-option label="商务车" value="商务车" />
+                      <el-option label="货车" value="货车" />
+                      <el-option label="客车" value="客车" />
                     </el-select>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="isMobile ? 0 : 8" v-if="!isMobile">
                   <el-form-item label="燃料类型" prop="fuel_type">
-                    <el-select v-model="formData.fuel_type" placeholder="请选择燃料类型" clearable>
+                    <el-select
+                      v-model="formData.fuel_type"
+                      placeholder="请选择燃料类型"
+                      clearable
+                    >
                       <el-option label="汽油" value="汽油" />
                       <el-option label="柴油" value="柴油" />
                       <el-option label="电动" value="电动" />
@@ -102,115 +180,88 @@
                 </el-col>
               </el-row>
 
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item label="座位数" prop="seats">
-                    <el-select v-model="formData.seats" placeholder="请选择座位数" clearable>
+              <!-- 第三行：PC端(座位数+发动机容积+传动方式) 移动端(燃料类型+发动机容积) -->
+              <el-row :gutter="isMobile ? 0 : 20">
+                <el-col :span="isMobile ? 12 : 8">
+                  <el-form-item :label="isMobile ? '燃料类型' : '座位数'" :prop="isMobile ? 'fuel_type' : 'seats'">
+                    <el-select
+                      v-if="isMobile"
+                      v-model="formData.fuel_type"
+                      placeholder="请选择燃料类型"
+                      clearable
+                    >
+                      <el-option label="汽油" value="汽油" />
+                      <el-option label="柴油" value="柴油" />
+                      <el-option label="电动" value="电动" />
+                      <el-option label="混合动力" value="混合动力" />
+                    </el-select>
+                    <el-select
+                      v-else
+                      v-model="formData.seats"
+                      placeholder="请选择座位数"
+                      clearable
+                    >
                       <el-option label="2座" value="2" />
                       <el-option label="4座" value="4" />
                       <el-option label="5座" value="5" />
-                      <el-option label="6座" value="6" />
                       <el-option label="7座" value="7" />
-                      <el-option label="8座" value="8" />
+                      <el-option label="8座及以上" value="8+" />
                     </el-select>
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
-                  <el-form-item label="发动机容积" prop="engine_volume">
-                    <el-select 
-                      v-model="formData.engine_volume" 
-                      placeholder="请选择发动机容积"
+                <el-col :span="isMobile ? 12 : 8">
+                  <el-form-item label="发动机容积" prop="engine_capacity">
+                    <div class="engine-capacity-select">
+                      <el-select
+                        v-model="formData.engine_capacity"
+                        placeholder="请选择发动机容积"
+                        clearable
+                      >
+                        <el-option
+                          v-for="capacity in engineCapacityList"
+                          :key="capacity.value"
+                          :label="capacity.label"
+                          :value="capacity.value"
+                        />
+                      </el-select>
+                      <span class="engine-unit">cc</span>
+                    </div>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="isMobile ? 0 : 8" v-if="!isMobile">
+                  <el-form-item label="传动方式" prop="transmission">
+                    <el-select
+                      v-model="formData.transmission"
+                      placeholder="请选择传动方式"
                       clearable
                     >
-                      <el-option label="660 以下" value="660 以下" />
-                      <el-option label="661-1500" value="661-1500" />
-                      <el-option label="1501-2000" value="1501-2000" />
-                      <el-option label="2001-2500" value="2001-2500" />
-                      <el-option label="2501-3500" value="2501-3500" />
-                      <el-option label="3501-4500" value="3501-4500" />
-                      <el-option label="4501 以上" value="4501 以上" />
+                      <el-option label="自动波 AT" value="自动波 AT" />
+                      <el-option label="棍波 MT" value="棍波 MT" />
                     </el-select>
                   </el-form-item>
                 </el-col>
               </el-row>
 
-              <el-form-item label="传动方式" prop="transmission">
-                <el-select v-model="formData.transmission" placeholder="请选择传动方式" clearable>
-                  <el-option label="手动挡" value="手动挡" />
-                  <el-option label="自动挡" value="自动挡" />
-                  <el-option label="CVT" value="CVT" />
-                  <el-option label="双离合" value="双离合" />
-                </el-select>
-              </el-form-item>
-            </div>
-
-            <!-- 车辆图片 -->
-            <div class="form-section">
-              <h3 class="section-title">车辆图片</h3>
-              <el-form-item label="上传图片" prop="images">
-                <div class="image-upload-container">
-                  <el-upload
-                    ref="uploadRef"
-                    v-model:file-list="fileList"
-                    :action="uploadAction"
-                    :headers="uploadHeaders"
-                    :before-upload="beforeUpload"
-                    :on-success="handleUploadSuccess"
-                    :on-error="handleUploadError"
-                    :on-remove="handleRemove"
-                    :on-preview="handlePreview"
-                    list-type="picture-card"
-                    :limit="10"
-                    multiple
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    :auto-upload="false"
-                  >
-                    <el-icon class="upload-icon"><Plus /></el-icon>
-                    <div class="upload-text">上传图片</div>
-                  </el-upload>
-                  <div class="upload-tips">
-                    <p>• 支持 JPEG、JPG、PNG、WEBP 格式</p>
-                    <p>• 单张图片最大 5MB</p>
-                    <p>• 最多上传 10 张图片</p>
-                    <p>• 建议上传车辆外观、内饰等多角度照片</p>
-                  </div>
-                </div>
-              </el-form-item>
-            </div>
-
-            <!-- 车辆描述 -->
-            <div class="form-section">
-              <h3 class="section-title">车辆描述</h3>
-              <el-form-item label="车辆描述" prop="description">
-                <el-input
-                  v-model="formData.description"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="请详细描述车辆的特点、配置、车况等信息..."
-                  maxlength="500"
-                  show-word-limit
-                />
-              </el-form-item>
             </div>
 
             <!-- 联系信息 -->
             <div class="form-section">
               <h3 class="section-title">联系信息</h3>
               
-              <el-row :gutter="20">
-                <el-col :span="12">
+              <el-row :gutter="isMobile ? 16 : 20">
+                <el-col :span="isMobile ? 12 : 12">
                   <el-form-item label="联系人姓名" prop="contact_name">
-                    <el-input 
-                      v-model="formData.contact_name" 
+                    <el-input
+                      v-model="formData.contact_name"
                       placeholder="请输入联系人姓名"
                       clearable
                     />
                   </el-form-item>
                 </el-col>
-                <el-col :span="12">
+                <el-col :span="isMobile ? 12 : 12">
                   <el-form-item label="联系电话" prop="phone_number">
-                    <el-input 
-                      v-model="formData.phone_number" 
+                    <el-input
+                      v-model="formData.phone_number"
                       placeholder="请输入联系电话"
                       clearable
                     />
@@ -219,7 +270,53 @@
               </el-row>
             </div>
 
-  
+            <!-- 车辆描述 -->
+            <div class="form-section">
+              <h3 class="section-title">车辆描述</h3>
+              
+              <el-row>
+                <el-col :span="24">
+                  <el-form-item label="车辆描述" prop="description">
+                    <el-input
+                      v-model="formData.description"
+                      type="textarea"
+                      :rows="4"
+                      placeholder="请简要描述车辆的特点、配置、车况等信息（可选）"
+                      clearable
+                      maxlength="500"
+                      show-word-limit
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+
+            <!-- 车辆图片 -->
+            <div class="form-section">
+              <h3 class="section-title">车辆图片</h3>
+              <div class="image-upload-container">
+                <el-upload
+                  v-model:file-list="fileList"
+                  action="#"
+                  list-type="picture-card"
+                  :auto-upload="false"
+                  :on-preview="handlePictureCardPreview"
+                  :on-remove="handleRemove"
+                  :before-upload="beforeUpload"
+                  multiple
+                  :limit="10"
+                >
+                  <el-icon><Plus /></el-icon>
+                  <template #tip>
+                    <div class="upload-tips">
+                      • 支持 JPEG、JPG、PNG、WEBP 格式 • 单张图片最大 5MB •
+                      最多上传 10 张图片 • 建议上传车辆外观、内饰等多角度照片
+                    </div>
+                  </template>
+                </el-upload>
+              </div>
+            </div>
+
             <!-- 操作按钮 -->
             <div class="form-actions">
               <el-button @click="goBack">
@@ -237,175 +334,72 @@
     </div>
 
     <!-- 我的发布车辆 -->
-    <div class="my-vehicles-section">
+    <div class="my-vehicles-section" v-if="isMinggeUser">
       <div class="container">
         <div class="section-header">
           <h2 class="section-title">我的发布车辆</h2>
           <p class="section-subtitle">管理您已发布的车辆信息</p>
         </div>
-
-        <div class="vehicles-content" v-loading="loadingVehicles">
-          <div v-if="myVehicles.length === 0 && !loadingVehicles" class="empty-state">
-            <el-empty description="暂无发布的车辆">
-              <el-button type="primary" @click="scrollToForm">
-                <el-icon><Plus /></el-icon>
-                发布第一辆车
-              </el-button>
-            </el-empty>
-          </div>
-
-          <div v-else class="cars-grid">
-            <div v-if="myVehicles.length === 0" style="color: red; padding: 20px;">
-                DEBUG: myVehicles is empty! Length: {{ myVehicles.length }}
-            </div>
+        <div class="vehicles-content">
+          <div class="cars-grid" v-if="publishedCars.length > 0">
             <div
-              v-for="car in myVehicles"
+              v-for="car in publishedCars"
               :key="car.id"
               class="car-card"
-              @click="handleCarClick(car)"
+              @click="viewCarDetail(car)"
             >
               <div class="car-image">
-                <img
-                  :src="getCarImage(car)"
-                  :alt="`${car.car_brand} ${car.car_model}`"
-                  @error="handleImageError"
-                  @load="handleImageLoad"
-                  loading="lazy"
-                />
-                <div v-if="car.is_special_offer === 1" class="car-badge special-offer">
-                  <el-icon><Star /></el-icon>
-                </div>
-                <div v-else class="car-badge new">新上架</div>
+                <img :src="car.image" :alt="car.title" />
               </div>
               <div class="car-info">
-                <h3 class="car-name">{{ car.car_brand }} {{ car.car_model }}</h3>
-                <p class="car-details">{{ car.year }} | {{ car.fuel_type }} | {{ formatSeats(car.seats) }}</p>
-                <div class="car-price" :class="{ 'special-offer-price': car.is_special_offer === 1 }">
-                  <template v-if="car.is_special_offer === 1">
-                    <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
-                  </template>
-                  <template v-else>
-                    <template v-if="getFormattedPrice(car) === '价格面议'">
-                      <span class="price">价格面议</span>
-                    </template>
-                    <template v-else>
-                      <div class="price-container">
-                        <span class="current-price">{{ getFormattedPrice(car).currentPrice }}</span>
-                        <span v-if="getFormattedPrice(car).hasDiscount" class="original-price">
-                          {{ getFormattedPrice(car).originalPrice }}
-                        </span>
-                        <span v-if="getFormattedPrice(car).hasDiscount" class="discount-badge">
-                          -{{ getFormattedPrice(car).discountPercent }}%
-                        </span>
-                      </div>
-                    </template>
-                  </template>
-                </div>
-                <div class="car-contact">
-                  <el-icon><Phone /></el-icon>
-                  <span v-if="car.is_special_offer === 1">明哥 98702065</span>
-                  <span v-else-if="isMinggeUser">{{ car.contact_name || '明哥' }} {{ car.phone_number || '98702065' }}</span>
-                  <span v-else>明哥 98702065</span>
-                </div>
-                <!-- 额外信息 -->
-                <div class="car-extra" v-if="car.transmission || car.engine_volume">
-                  <span v-if="car.transmission" class="extra-item">{{ car.transmission }}</span>
-                  <span v-if="car.engine_volume" class="extra-item">{{ car.engine_volume }}</span>
+                <h3 class="car-title">{{ car.title }}</h3>
+                <p class="car-price">¥{{ car.price.toLocaleString() }}</p>
+                <div class="car-details">
+                  <span>{{ car.year }}年</span>
+                  <span>{{ car.mileage }}万公里</span>
+                  <span>{{ car.location }}</span>
                 </div>
               </div>
             </div>
+          </div>
+          <div v-else class="no-cars">
+            <p>您还没有发布任何车辆</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 图片预览对话框 -->
-    <el-dialog v-model="previewVisible" title="图片预览" width="50%" center>
-      <img :src="previewImageUrl" alt="预览图片" style="width: 100%; height: auto;" />
-    </el-dialog>
+    <AppFooter />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Plus, Check, Phone, Star } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { Plus, ArrowLeft, Check } from '@element-plus/icons-vue'
 import AppHeader from '@/components/AppHeader.vue'
-import { useUserStore } from '@/stores/user'
+import AppFooter from '@/components/AppFooter.vue'
 import { vehicleAPI } from '@/utils/api'
-import { getImageUrl } from '@/config/api'
 
 const router = useRouter()
-const userStore = useUserStore()
 
-// 品牌列表（从搜索页面复制）
-const brandsList = [
-  { value: "豐田 TOYOTA", label: "豐田 TOYOTA" },
-  { value: "平治 MERCEDES-BENZ", label: "平治 MERCEDES-BENZ" },
-  { value: "本田 HONDA", label: "本田 HONDA" },
-  { value: "寶馬 BMW", label: "寶馬 BMW" },
-  { value: "保時捷 PORSCHE", label: "保時捷 PORSCHE" },
-  { value: "奧迪 AUDI", label: "奧迪 AUDI" },
-  { value: "日產 NISSAN", label: "日產 NISSAN" },
-  { value: "特斯拉 TESLA", label: "特斯拉 TESLA" },
-  { value: "凌志 LEXUS", label: "凌志 LEXUS" },
-  { value: "五十鈴 ISUZU", label: "五十鈴 ISUZU" },
-  { value: "福士 VOLKSWAGEN", label: "福士 VOLKSWAGEN" },
-  { value: "越野路華 LAND ROVER", label: "越野路華 LAND ROVER" },
-  { value: "鈴木 SUZUKI", label: "鈴木 SUZUKI" },
-  { value: "富士 SUBARU", label: "富士 SUBARU" },
-  { value: "萬事得 MAZDA", label: "萬事得 MAZDA" },
-  { value: "三菱 MITSUBISHI", label: "三菱 MITSUBISHI" },
-  { value: "起亞 KIA", label: "起亞 KIA" },
-  { value: "法拉利 FERRARI", label: "法拉利 FERRARI" },
-  { value: "迷你 MINI", label: "迷你 MINI" },
-  { value: "現代 HYUNDAI", label: "現代 HYUNDAI" },
-  { value: "福特 FORD", label: "福特 FORD" },
-  { value: "賓利 BENTLEY", label: "賓利 BENTLEY" },
-  { value: "富豪 VOLVO", label: "富豪 VOLVO" },
-  { value: "日野 HINO", label: "日野 HINO" },
-  { value: "林寶堅尼 LAMBORGHINI", label: "林寶堅尼 LAMBORGHINI" },
-  { value: "瑪莎拉蒂 MASERATI", label: "瑪莎拉蒂 MASERATI" },
-  { value: "勞斯萊斯 ROLLS ROYCE", label: "勞斯萊斯 ROLLS ROYCE" },
-  { value: "麥拿倫 MCLAREN", label: "麥拿倫 MCLAREN" },
-  { value: "積架 JAGUAR", label: "積架 JAGUAR" },
-  { value: "標緻 PEUGEOT", label: "標緻 PEUGEOT" },
-  { value: "比亞迪 BYD", label: "比亞迪 BYD" },
-  { value: "阿士頓馬田 ASTON MARTIN", label: "阿士頓馬田 ASTON MARTIN" },
-  { value: "MAXUS", label: "MAXUS" },
-  { value: "蓮花 LOTUS", label: "蓮花 LOTUS" },
-  { value: "SMART", label: "SMART" },
-  { value: "大發 DAIHATSU", label: "大發 DAIHATSU" },
-  { value: "愛快 ALFAROMEO", label: "愛快 ALFAROMEO" },
-  { value: "雷諾 RENAULT", label: "雷諾 RENAULT" },
-  { value: "INFINITI", label: "INFINITI" },
-  { value: "JEEP", label: "JEEP" },
-  { value: "東風 DONGFENG", label: "東風 DONGFENG" },
-  { value: "路華 ROVER", label: "路華 ROVER" },
-  { value: "先進 CITROEN", label: "先進 CITROEN" },
-  { value: "雙龍 SSANGYONG", label: "雙龍 SSANGYONG" },
-  { value: "MG", label: "MG" },
-  { value: "快意 FIAT", label: "快意 FIAT" },
-  { value: "SCANIA", label: "SCANIA" },
-  { value: "福田 FOTON", label: "福田 FOTON" },
-  { value: "江淮 JAC", label: "江淮 JAC" },
-  { value: "大實力 UD", label: "大實力 UD" },
-  { value: "猛獅 MAN", label: "猛獅 MAN" },
-  { value: "中國重汽 SINOTRUK", label: "中國重汽 SINOTRUK" },
-  { value: "歐寶 OPEL", label: "歐寶 OPEL" },
-  { value: "紳寶 SAAB", label: "紳寶 SAAB" }
-]
-
-// 年份选项（1990-2025）
-const yearOptions = []
-for (let year = 2025; year >= 1990; year--) {
-  yearOptions.push({ value: year.toString(), label: year.toString() })
-}
+// 响应式检测
+const isMobile = computed(() => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth <= 768
+  }
+  return false
+})
 
 // 表单引用
 const formRef = ref()
-const uploadRef = ref()
+
+// 提交状态
+const submitting = ref(false)
+
+// 文件列表
+const fileList = ref([])
 
 // 表单数据
 const formData = reactive({
@@ -413,51 +407,26 @@ const formData = reactive({
   car_model: '',
   year: '',
   price: '',
-  vehicle_type: 1,
+  car_type: '',
   fuel_type: '',
   seats: '',
-  engine_volume: '',
+  engine_capacity: '',
   transmission: '',
-  description: '',
   contact_name: '',
-  phone_number: ''
-})
-
-// 文件列表
-const fileList = ref([])
-
-// 加载状态
-const submitting = ref(false)
-
-// 我的车辆数据
-const myVehicles = ref([])
-const loadingVehicles = ref(false)
-
-// 图片预览
-const previewVisible = ref(false)
-const previewImageUrl = ref('')
-
-// 上传配置
-const uploadAction = computed(() => {
-  return import.meta.env.VITE_API_BASE_URL + '/vehicles/publish'
-})
-
-const uploadHeaders = computed(() => {
-  const token = localStorage.getItem('token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
+  phone_number: '',
+  description: '' // 发布状态固定为1（已发布），不需要用户选择
 })
 
 // 表单验证规则
 const formRules = {
   car_brand: [
-    { required: true, message: '请输入车辆品牌', trigger: 'blur' }
+    { required: true, message: '请选择车辆品牌', trigger: 'change' }
   ],
   car_model: [
     { required: true, message: '请输入车辆型号', trigger: 'blur' }
   ],
   year: [
-    { required: true, message: '请输入年份', trigger: 'blur' },
-    { pattern: /^\d{4}$/, message: '年份格式不正确，请输入4位数字', trigger: 'blur' }
+    { required: true, message: '请选择年份', trigger: 'change' }
   ],
   price: [
     { required: true, message: '请输入价格', trigger: 'blur' }
@@ -467,11 +436,192 @@ const formRules = {
   ],
   phone_number: [
     { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { pattern: /^(\d{11}|\d{8})$/, message: '请输入正确的电话号码格式（大陆11位或香港8位）', trigger: 'blur' }
+    { pattern: /^(\d{11}|\d{8})$/, message: '请输入有效的联系电话（大陆11位或香港8位）', trigger: 'blur' }
   ]
 }
 
-// 上传前检查
+// 品牌列表（与搜索页面保持一致）
+const brandsList = [
+  { label: "豐田 TOYOTA", value: "豐田 TOYOTA" },
+  { label: "平治 MERCEDES-BENZ", value: "平治 MERCEDES-BENZ" },
+  { label: "本田 HONDA", value: "本田 HONDA" },
+  { label: "寶馬 BMW", value: "寶馬 BMW" },
+  { label: "保時捷 PORSCHE", value: "保時捷 PORSCHE" },
+  { label: "奧迪 AUDI", value: "奧迪 AUDI" },
+  { label: "日產 NISSAN", value: "日產 NISSAN" },
+  { label: "特斯拉 TESLA", value: "特斯拉 TESLA" },
+  { label: "凌志 LEXUS", value: "凌志 LEXUS" },
+  { label: "五十鈴 ISUZU", value: "五十鈴 ISUZU" },
+  { label: "福士 VOLKSWAGEN", value: "福士 VOLKSWAGEN" },
+  { label: "越野路華 LAND ROVER", value: "越野路華 LAND ROVER" },
+  { label: "鈴木 SUZUKI", value: "鈴木 SUZUKI" },
+  { label: "富士 SUBARU", value: "富士 SUBARU" },
+  { label: "萬事得 MAZDA", value: "萬事得 MAZDA" },
+  { label: "三菱 MITSUBISHI", value: "三菱 MITSUBISHI" },
+  { label: "起亞 KIA", value: "起亞 KIA" },
+  { label: "法拉利 FERRARI", value: "法拉利 FERRARI" },
+  { label: "迷你 MINI", value: "迷你 MINI" },
+  { label: "現代 HYUNDAI", value: "現代 HYUNDAI" },
+  { label: "福特 FORD", value: "福特 FORD" },
+  { label: "賓利 BENTLEY", value: "賓利 BENTLEY" },
+  { label: "富豪 VOLVO", value: "富豪 VOLVO" },
+  { label: "日野 HINO", value: "日野 HINO" },
+  { label: "林寶堅尼 LAMBORGHINI", value: "林寶堅尼 LAMBORGHINI" },
+  { label: "瑪莎拉蒂 MASERATI", value: "瑪莎拉蒂 MASERATI" },
+  { label: "勞斯萊斯 ROLLS ROYCE", value: "勞斯萊斯 ROLLS ROYCE" },
+  { label: "麥拿倫 MCLAREN", value: "麥拿倫 MCLAREN" },
+  { label: "積架 JAGUAR", value: "積架 JAGUAR" },
+  { label: "標緻 PEUGEOT", value: "標緻 PEUGEOT" },
+  { label: "比亞迪 BYD", value: "比亞迪 BYD" },
+  { label: "阿士頓馬田 ASTON MARTIN", value: "阿士頓馬田 ASTON MARTIN" },
+  { label: "MAXUS", value: "MAXUS" },
+  { label: "蓮花 LOTUS", value: "蓮花 LOTUS" },
+  { label: "SMART", value: "SMART" },
+  { label: "大發 DAIHATSU", value: "大發 DAIHATSU" },
+  { label: "愛快 ALFAROMEO", value: "愛快 ALFAROMEO" },
+  { label: "雷諾 RENAULT", value: "雷諾 RENAULT" },
+  { label: "INFINITI", value: "INFINITI" },
+  { label: "JEEP", value: "JEEP" },
+  { label: "東風 DONGFENG", value: "東風 DONGFENG" },
+  { label: "路華 ROVER", value: "路華 ROVER" },
+  { label: "先進 CITROEN", value: "先進 CITROEN" },
+  { label: "雙龍 SSANGYONG", value: "雙龍 SSANGYONG" },
+  { label: "MG", value: "MG" },
+  { label: "快意 FIAT", value: "快意 FIAT" },
+  { label: "SCANIA", value: "SCANIA" },
+  { label: "福田 FOTON", value: "福田 FOTON" },
+  { label: "江淮 JAC", value: "江淮 JAC" },
+  { label: "大實力 UD", value: "大實力 UD" },
+  { label: "猛獅 MAN", value: "猛獅 MAN" },
+  { label: "中國重汽 SINOTRUK", value: "中國重汽 SINOTRUK" },
+  { label: "歐寶 OPEL", value: "歐寶 OPEL" },
+  { label: "紳寶 SAAB", value: "紳寶 SAAB" }
+]
+
+// 年份列表
+const yearsList = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let i = currentYear; i >= 1990; i--) {
+    years.push(i.toString())
+  }
+  return years
+})
+
+// 发动机容积列表（1000-6000cc，每100递增）
+const engineCapacityList = computed(() => {
+  const capacities = []
+  for (let i = 1000; i <= 6000; i += 100) {
+    capacities.push({ label: i.toString(), value: i.toString() })
+  }
+  return capacities
+})
+
+// 计算属性
+const isMinggeUser = computed(() => {
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+  return userInfo.username === 'mingge'
+})
+
+// 模拟已发布车辆数据
+const publishedCars = ref([
+  {
+    id: 1,
+    title: '奔驰 E300 2020款',
+    price: 350000,
+    year: 2020,
+    mileage: 3.2,
+    location: '北京',
+    image: '/api/placeholder/300/200'
+  },
+  {
+    id: 2,
+    title: '宝马 X5 2019款',
+    price: 450000,
+    year: 2019,
+    mileage: 4.5,
+    location: '上海',
+    image: '/api/placeholder/300/200'
+  }
+])
+
+// 方法
+const goBack = () => {
+  router.go(-1)
+}
+
+const submitForm = async () => {
+  if (!formRef.value) return
+  
+  try {
+    await formRef.value.validate()
+    submitting.value = true
+    
+    // 创建FormData对象用于文件上传
+    const submitData = new FormData()
+    
+    // 添加表单字段，需要映射字段名以匹配API要求
+    submitData.append('car_brand', formData.car_brand)
+    submitData.append('car_model', formData.car_model)
+    submitData.append('year', formData.year)
+    submitData.append('price', formData.price)
+    submitData.append('contact_name', formData.contact_name)
+    submitData.append('phone_number', formData.phone_number)
+    
+    // 可选字段
+    if (formData.car_type) {
+      // 将车辆类型映射为vehicle_type数字
+      const typeMapping = {
+        '私家车': 1,
+        '商务车': 2, 
+        '货车': 3,
+        '客车': 4
+      }
+      submitData.append('vehicle_type', typeMapping[formData.car_type] || 1)
+    }
+    
+    if (formData.fuel_type) submitData.append('fuel_type', formData.fuel_type)
+    if (formData.seats) submitData.append('seats', formData.seats)
+    if (formData.engine_capacity) submitData.append('engine_volume', formData.engine_capacity)
+    if (formData.transmission) submitData.append('transmission', formData.transmission)
+    if (formData.description) submitData.append('description', formData.description)
+    submitData.append('publish_status', 1) // 固定为已发布状态
+    
+    // 添加图片文件
+    fileList.value.forEach((file, index) => {
+      if (file.raw) {
+        submitData.append('images', file.raw)
+      }
+    })
+    
+    // 调用发布API
+    const result = await vehicleAPI.publishVehicle(submitData)
+    
+    ElMessage.success('车辆发布成功！')
+    
+    // 跳转到我的车辆页面或首页
+    router.push('/my-vehicles')
+    
+  } catch (error) {
+    console.error('发布车辆失败:', error)
+    if (error.message) {
+      ElMessage.error(error.message)
+    } else {
+      ElMessage.error('发布失败，请检查网络连接后重试')
+    }
+  } finally {
+    submitting.value = false
+  }
+}
+
+const handlePictureCardPreview = (file) => {
+  console.log('预览图片:', file)
+}
+
+const handleRemove = (file, fileList) => {
+  console.log('移除图片:', file, fileList)
+}
+
 const beforeUpload = (file) => {
   const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)
   const isLt5M = file.size / 1024 / 1024 < 5
@@ -487,200 +637,13 @@ const beforeUpload = (file) => {
   return true
 }
 
-// 上传成功处理
-const handleUploadSuccess = (response, file) => {
-  ElMessage.success('图片上传成功')
+const viewCarDetail = (car) => {
+  console.log('查看车辆详情:', car)
 }
 
-// 上传失败处理
-const handleUploadError = (error, file) => {
-  ElMessage.error('图片上传失败: ' + error.message)
-}
-
-// 移除图片
-const handleRemove = (file) => {
-  // 处理图片移除逻辑
-}
-
-// 预览图片
-const handlePreview = (file) => {
-  previewImageUrl.value = file.url || file.response?.url
-  previewVisible.value = true
-}
-
-// 提交表单
-const submitForm = async () => {
-  if (!formRef.value) return
-
-  try {
-    await formRef.value.validate()
-    
-    submitting.value = true
-    
-    // 创建 FormData
-    const formDataToSubmit = new FormData()
-    
-    // 添加表单字段
-    Object.keys(formData).forEach(key => {
-      if (formData[key] !== '' && formData[key] !== null && formData[key] !== undefined) {
-        formDataToSubmit.append(key, formData[key])
-      }
-    })
-    
-    // 添加图片文件
-    fileList.value.forEach((file, index) => {
-      if (file.raw) {
-        formDataToSubmit.append('images', file.raw)
-      }
-    })
-    
-    // 调用API
-    const response = await vehicleAPI.publishVehicle(formDataToSubmit)
-    
-    ElMessage.success('车辆发布成功！')
-
-    // 刷新我的车辆列表
-    await loadMyVehicles()
-
-    // 滚动到我的车辆区域
-    setTimeout(() => {
-      document.querySelector('.my-vehicles-section')?.scrollIntoView({ behavior: 'smooth' })
-    }, 500)
-    
-  } catch (error) {
-    console.error('提交失败:', error)
-    ElMessage.error('提交失败: ' + (error.message || '未知错误'))
-  } finally {
-    submitting.value = false
-  }
-}
-
-
-// 返回
-const goBack = () => {
-  router.go(-1)
-}
-
-// 加载我的车辆列表
-const loadMyVehicles = async () => {
-  loadingVehicles.value = true
-  try {
-    console.log('loadMyVehicles called')
-    const response = await vehicleAPI.getMyVehicles({
-      page: 1,
-      limit: 10,
-      sort_by: 'created_at',
-      sort_order: 'DESC'
-    })
-    console.log('loadMyVehicles response:', response)
-    myVehicles.value = response.vehicles || []
-    console.log('myVehicles set to:', myVehicles.value)
-  } catch (error) {
-    console.error('加载我的车辆失败:', error)
-    // 不显示错误，避免影响发布体验
-  } finally {
-    loadingVehicles.value = false
-  }
-}
-
-// 计算属性
-const isMinggeUser = computed(() => {
-  return userStore.isLoggedIn && userStore.username === 'mingge'
-})
-
-// 获取车辆图片
-const getCarImage = (car) => {
-  const imageUrl = car.images && car.images.length > 0
-    ? car.images[0].image_url
-    : '/default-car.jpg'
-  const result = getImageUrl(imageUrl)
-  console.log('getCarImage debug:', { imageUrl, result, env: import.meta.env.VITE_IMAGE_BASE_URL })
-  return result
-}
-
-// 格式化座位数
-const formatSeats = (seats) => {
-  if (!seats) return '座位未知'
-  const seatNumber = seats.match(/\d+/)
-  if (seatNumber) {
-    return `${seatNumber[0]}座`
-  }
-  return seats
-}
-
-// 获取格式化价格
-const getFormattedPrice = (car) => {
-  const currentPrice = car.current_price
-  const originalPrice = car.original_price
-
-  if (!currentPrice || currentPrice === '0.00' || currentPrice === 0) {
-    return '价格面议'
-  }
-
-  const formattedCurrent = `HKD$${parseFloat(currentPrice).toLocaleString()}`
-
-  if (!originalPrice || originalPrice === '0.00' || originalPrice === 0) {
-    return {
-      currentPrice: formattedCurrent,
-      hasDiscount: false
-    }
-  }
-
-  const current = parseFloat(currentPrice)
-  const original = parseFloat(originalPrice)
-
-  if (current >= original) {
-    return {
-      currentPrice: formattedCurrent,
-      hasDiscount: false
-    }
-  }
-
-  const discountPercent = Math.round(((original - current) / original) * 100)
-
-  return {
-    currentPrice: formattedCurrent,
-    originalPrice: `HKD$${original.toLocaleString()}`,
-    hasDiscount: true,
-    discountPercent
-  }
-}
-
-// 图片加载失败处理
-const handleImageError = (event) => {
-  if (event.target.src.includes('default-car.jpg')) {
-    return
-  }
-  event.target.src = '/default-car.jpg'
-}
-
-// 图片加载成功处理
-const handleImageLoad = (event) => {
-  // 图片加载成功后的处理
-}
-
-// 滚动到表单
-const scrollToForm = () => {
-  document.querySelector('.publish-card')?.scrollIntoView({ behavior: 'smooth' })
-}
-
-// 车辆点击处理
-const handleCarClick = (car) => {
-  router.push({ path: `/vehicle/${car.vehicle_id}` })
-}
-
-// 检查登录状态
+// 页面初始化
 onMounted(() => {
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录后再发布车辆')
-    router.push({ path: '/auth' })
-    return
-  }
-
-  // 联系人信息不预填充，用户需要手动输入
-
-  // 加载用户已发布的车辆
-  loadMyVehicles()
+  // 页面加载完成
 })
 </script>
 
@@ -689,7 +652,7 @@ onMounted(() => {
 
 .publish-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, $primary-color 0%, color-mix(in srgb, $primary-color 80%, white) 100%);
   padding-top: 80px;
 }
 
@@ -703,80 +666,99 @@ onMounted(() => {
   text-align: center;
   margin-bottom: 40px;
   color: white;
+
+  .page-title {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    line-height: 1.5;
+  }
 }
 
-.page-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 16px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  opacity: 0.9;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.publish-content {
-  display: flex;
-  justify-content: center;
-}
-
-.publish-card {
-  width: 100%;
-  max-width: 900px;
+.vehicles-content {
+  background: white;
   border-radius: 16px;
+  padding: 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
+.publish-card {
+  border: none;
+  box-shadow: none;
+  border-radius: 16px;
+
+  :deep(.el-card__body) {
+    padding: 0;
+  }
+}
+
 .publish-form {
-  padding: 40px;
+  padding: 32px;
+  
+  :deep(.el-form-item) {
+    margin-bottom: 24px;
+  }
+  
+  :deep(.el-form-item__label) {
+    font-size: 1rem !important;
+    font-weight: 500;
+    color: $text-primary;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
 }
 
 .form-section {
-  margin-bottom: 32px;
-  
+  margin-bottom: 40px;
+
   .section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: $text-primary;
-    margin-bottom: 20px;
-    padding-bottom: 8px;
+    font-size: 1.3rem;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
     border-bottom: 2px solid $primary-color;
-    display: inline-block;
+    color: $text-primary;
+    font-weight: 600;
   }
 }
 
 .image-upload-container {
-  .upload-tips {
-    margin-top: 16px;
-    padding: 12px;
-    background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  :deep(.el-upload--picture-card) {
+    width: 120px;
+    height: 120px;
     border-radius: 8px;
-    border-left: 4px solid $primary-color;
-    
-    p {
-      margin: 4px 0;
-      font-size: 0.875rem;
-      color: $text-secondary;
-      
-      &:first-child {
-        margin-top: 0;
-      }
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
+    border: 2px dashed #d9d9d9;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: $primary-color;
     }
   }
-}
 
-.upload-icon {
-  font-size: 28px;
-  color: #8c939d;
-  margin-bottom: 8px;
+  :deep(.el-upload-list--picture-card .el-upload-list__item) {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+  }
+
+  .upload-tips {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: 500px;
+  }
 }
 
 .upload-text {
@@ -831,227 +813,531 @@ onMounted(() => {
 
   .cars-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
   }
 
   .car-card {
     background: white;
-    border-radius: $border-radius-large;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: $box-shadow-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
 
     &:hover {
       transform: translateY(-4px);
-      box-shadow: $box-shadow-dark;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     }
 
     .car-image {
-      position: relative;
-      height: 185px;
+      width: 100%;
+      height: 200px;
       overflow: hidden;
 
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-      }
-
-      .car-badge {
-        position: absolute;
-        top: $spacing-sm;
-        right: $spacing-sm;
-        background: $primary-color;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-
-        &.special-offer {
-          background: linear-gradient(135deg, #ff6b6b, #ff8e53);
-        }
-
-        &.new {
-          background: linear-gradient(135deg, #4ecdc4, #44a08d);
-        }
+        transition: transform 0.3s ease;
       }
     }
 
-    .car-info {
-      padding: 16px;
+    &:hover .car-image img {
+      transform: scale(1.05);
+    }
 
-      .car-name {
-        font-size: 1.125rem;
+    .car-info {
+      padding: 20px;
+
+      .car-title {
+        font-size: 1.2rem;
         font-weight: 600;
         color: $text-primary;
         margin-bottom: 8px;
-        line-height: 1.3;
-      }
-
-      .car-details {
-        color: $text-secondary;
-        font-size: 0.875rem;
-        margin-bottom: 12px;
       }
 
       .car-price {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: $primary-color;
         margin-bottom: 12px;
-
-        &.special-offer-price {
-          .current-price {
-            color: #ff6b6b;
-            font-weight: 700;
-          }
-        }
-
-        .price-container {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .current-price {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: $primary-color;
-        }
-
-        .original-price {
-          font-size: 0.875rem;
-          color: $text-secondary;
-          text-decoration: line-through;
-        }
-
-        .discount-badge {
-          background: #ff6b6b;
-          color: white;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 0.75rem;
-          font-weight: 600;
-        }
-
-        .price {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: $primary-color;
-        }
       }
 
-      .car-contact {
+      .car-details {
         display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.875rem;
+        gap: 12px;
+        font-size: 0.9rem;
         color: $text-secondary;
-        margin-bottom: 8px;
 
-        .el-icon {
-          font-size: 16px;
-          color: $primary-color;
-        }
-      }
-
-      .car-extra {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-
-        .extra-item {
-          background: #f8f9fa;
-          color: $text-secondary;
+        span {
           padding: 4px 8px;
+          background: #f8f9fa;
           border-radius: 4px;
-          font-size: 0.75rem;
-          border: 1px solid #e9ecef;
         }
       }
     }
   }
 
-  .empty-state {
+  .no-cars {
     text-align: center;
     padding: 60px 20px;
+    color: $text-secondary;
+    font-size: 1.1rem;
+  }
+}
+
+// 统一表单控件高度 - 强制所有控件使用相同高度
+:deep(.el-input),
+:deep(.el-select),
+:deep(.el-input__wrapper),
+:deep(.el-select .el-input__wrapper),
+:deep(.el-select__wrapper) {
+  min-height: 40px !important;
+  height: 40px !important;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select .el-input__wrapper) {
+  border-radius: 6px;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-input__wrapper) {
+  padding: 0 12px !important;
+}
+
+:deep(.el-select .el-input__wrapper) {
+  padding: 0 30px 0 12px !important;
+}
+
+:deep(.el-input__inner),
+:deep(.el-select .el-input__inner) {
+  height: 100% !important;
+  line-height: 1.5 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+:deep(.el-textarea__inner) {
+  padding: 8px 12px;
+  min-height: 80px;
+  border-radius: 6px;
+}
+
+// 确保选择器的下拉箭头垂直居中
+:deep(.el-select .el-input__suffix),
+:deep(.el-select .el-input__suffix-inner) {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+// 强制覆盖Element Plus的默认样式
+:deep(.el-select) {
+  width: 100% !important;
+  
+  .el-input {
+    height: 40px !important;
   }
 }
 
 // 响应式设计
 @media (max-width: 768px) {
   .container {
-    padding: 20px 15px;
+    padding: 20px 16px;
   }
   
-  .page-title {
-    font-size: 2rem;
+  // 移动端行间距调整
+  .el-row {
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+    
+    .el-col {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
   }
-  
-  .page-subtitle {
-    font-size: 1rem;
+
+  .page-header {
+    margin-bottom: 24px;
+
+    .page-title {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+    }
+
+    .page-subtitle {
+      font-size: 1rem;
+      line-height: 1.5;
+    }
   }
-  
-  .publish-form {
-    padding: 30px 20px;
-  }
-  
+
   .publish-card {
-    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   }
-  
+
+  .publish-form {
+    padding: 24px 20px;
+    
+    :deep(.el-form-item) {
+      margin-bottom: 24px;
+    }
+    
+    :deep(.el-form-item__label) {
+      font-size: 1rem !important;
+      font-weight: 500;
+      color: $text-primary;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+  }
+
+  .form-section {
+    margin-bottom: 32px;
+
+    .section-title {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      font-weight: 600;
+    }
+  }
+
   .form-actions {
     flex-direction: column;
-    
+    margin-top: 32px;
+    padding-top: 24px;
+    gap: 16px;
+    align-items: stretch;
+    padding-left: 0;
+    padding-right: 0;
+
     .el-button {
       width: 100%;
+      height: 48px;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 8px;
+      margin: 0;
     }
+  }
+
+  .image-upload-container {
+    flex-direction: column;
+    gap: 16px;
+
+    .upload-tips {
+      min-width: auto;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      border-radius: 8px;
+    }
+  }
+
+  // 我的发布车辆区域移动端优化
+  .my-vehicles-section {
+    padding: 40px 0;
+    margin-top: 32px;
+
+    .section-header {
+      margin-bottom: 30px;
+
+      .section-title {
+        font-size: 1.6rem;
+        margin-bottom: 8px;
+      }
+
+      .section-subtitle {
+        font-size: 1rem;
+      }
+    }
+
+    .vehicles-content {
+      padding: 20px 16px;
+      border-radius: 12px;
+    }
+
+    .cars-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .car-card {
+      .car-image {
+        height: 180px;
+      }
+
+      .car-info {
+        padding: 16px;
+
+        .car-title {
+          font-size: 1.1rem;
+        }
+
+        .car-price {
+          font-size: 1.2rem;
+        }
+
+        .car-details {
+          flex-wrap: wrap;
+          gap: 8px;
+
+          span {
+            font-size: 0.85rem;
+            padding: 3px 6px;
+          }
+        }
+      }
+    }
+  }
+
+  // 移动端表单控件优化 - 统一高度
+  :deep(.el-input),
+  :deep(.el-select),
+  :deep(.el-input__wrapper),
+  :deep(.el-select .el-input__wrapper),
+  :deep(.el-select__wrapper) {
+    min-height: 48px !important;
+    height: 48px !important;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-select .el-input__wrapper) {
+    border-radius: 8px;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.el-select .el-input__wrapper) {
+    padding: 0 40px 0 16px !important;
+  }
+
+  :deep(.el-input__inner),
+  :deep(.el-select .el-input__inner) {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    height: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.el-textarea__inner) {
+    padding: 12px 16px;
+    font-size: 1rem;
+    line-height: 1.5;
+    min-height: 100px;
+    border-radius: 8px;
+  }
+
+  :deep(.el-select .el-input__suffix),
+  :deep(.el-select .el-input__suffix-inner) {
+    right: 12px;
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+  }
+
+  :deep(.el-select) {
+    width: 100% !important;
+    
+    .el-input {
+      height: 48px !important;
+    }
+    
+    .el-select__wrapper {
+      height: 48px !important;
+    }
+  }
+
+  :deep(.el-input__inner::placeholder),
+  :deep(.el-textarea__inner::placeholder) {
+    color: $text-placeholder;
+    font-size: 0.95rem;
   }
 }
 
 @media (max-width: 480px) {
-  .page-title {
-    font-size: 1.8rem;
+  .form-actions {
+    margin-top: 28px;
+    padding-top: 20px;
+    gap: 12px;
+
+    .el-button {
+      height: 44px;
+      font-size: 0.95rem;
+    }
   }
-  
-  .publish-form {
-    padding: 20px 15px;
+
+  :deep(.el-input),
+  :deep(.el-select),
+  :deep(.el-input__wrapper),
+  :deep(.el-select .el-input__wrapper),
+  :deep(.el-select__wrapper) {
+    min-height: 44px !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
   }
-  
-  .form-section {
-    margin-bottom: 24px;
+
+  :deep(.el-input__wrapper),
+  :deep(.el-select .el-input__wrapper) {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 14px !important;
+    border-radius: 8px;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.el-select .el-input__wrapper) {
+    padding: 0 36px 0 14px !important;
+  }
+
+  :deep(.el-input__inner),
+  :deep(.el-select .el-input__inner) {
+    font-size: 0.95rem !important;
+    height: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.el-textarea__inner) {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    min-height: 90px;
+    border-radius: 8px;
+  }
+
+  :deep(.el-select .el-input__suffix),
+  :deep(.el-select .el-input__suffix-inner) {
+    right: 10px;
+    display: flex !important;
+    align-items: center !important;
+    height: 100% !important;
+  }
+
+  :deep(.el-select) {
+    width: 100% !important;
     
-    .section-title {
-      font-size: 1.125rem;
+    .el-input {
+      height: 44px !important;
+    }
+    
+    .el-select__wrapper {
+      height: 44px !important;
+    }
+  }
+
+  :deep(.el-input__inner::placeholder),
+  :deep(.el-textarea__inner::placeholder) {
+    font-size: 0.9rem;
+  }
+  
+  // 480px以下发动机容积选择器样式
+  .engine-capacity-select {
+    :deep(.el-select),
+    :deep(.el-select .el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 44px !important;
+      height: 44px !important;
+    }
+    
+    :deep(.el-select .el-input__wrapper) {
+      border-radius: 8px;
+      padding: 0 50px 0 14px !important; // 小屏幕左侧14px，右侧50px
+    }
+    
+    .engine-unit {
+      right: 30px; // 小屏幕调整位置
+      font-size: 12px;
     }
   }
 }
 
-// Element Plus 样式覆盖
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: $text-primary;
+// 发动机容积选择器样式
+.engine-capacity-select {
+  position: relative;
+  width: 100%; // 确保容器占满宽度
+  
+  .el-select {
+    width: 100%;
+  }
+  
+  // 继承统一的表单控件样式，但调整右侧padding为cc单位预留空间
+  :deep(.el-select),
+  :deep(.el-select .el-input__wrapper),
+  :deep(.el-select__wrapper) {
+    min-height: 40px !important;
+    height: 40px !important;
+    width: 100% !important;
+  }
+  
+  :deep(.el-select .el-input__wrapper) {
+    border-radius: 6px;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    padding: 0 50px 0 12px !important; // 左侧12px，右侧50px为cc单位预留空间
+  }
+  
+  .engine-unit {
+    position: absolute;
+    right: 30px; // 避免与下拉箭头重叠
+    top: 50%;
+    transform: translateY(-50%);
+    color: #909399;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 2;
+  }
 }
 
-:deep(.el-upload--picture-card) {
-  width: 104px;
-  height: 104px;
-  border-radius: 8px;
+// 移动端发动机容积选择器优化
+@media (max-width: 768px) {
+  .engine-capacity-select {
+    // 继承移动端统一表单控件样式
+    :deep(.el-select),
+    :deep(.el-select .el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 48px !important;
+      height: 48px !important;
+    }
+    
+    :deep(.el-select .el-input__wrapper) {
+      border-radius: 8px;
+      padding: 0 55px 0 16px !important; // 移动端左侧16px，右侧55px
+    }
+    
+    .engine-unit {
+      right: 35px; // 移动端调整位置
+      font-size: 13px;
+    }
+  }
 }
 
-:deep(.el-upload-list--picture-card .el-upload-list__item) {
-  width: 104px;
-  height: 104px;
-  border-radius: 8px;
-}
+// 移动端图片上传优化
+@media (max-width: 768px) {
+  .image-upload-container {
+    :deep(.el-upload--picture-card) {
+      width: 90px;
+      height: 90px;
+    }
 
-:deep(.el-radio-group) {
-  .el-radio {
-    margin-right: 24px;
+    :deep(.el-upload-list--picture-card .el-upload-list__item) {
+      width: 90px;
+      height: 90px;
+    }
   }
 }
 </style>
