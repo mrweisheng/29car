@@ -1307,14 +1307,11 @@ const doSearch = () => {
 
 // 品牌映射表（完整品牌名 → URL英文标识）
 // 导入统一的品牌配置
-import { brandMapping, brandsListWithCount } from '@/config/brands'
+// 导入统一的品牌配置和工具函数
+import { brandMapping, brandsListWithCount, getBrandFromUrl, getBrandParam } from '@/config/brands'
 
 // 品牌列表数据（使用统一配置）
 const brandsList = brandsListWithCount
-
-// 导入统一的工具函数
-import { getBrandFromUrl, getBrandParam } from '@/config/brands'
-}
 
 // 更新路由
 function updateRoute() {
