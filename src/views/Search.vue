@@ -1306,138 +1306,14 @@ const doSearch = () => {
 }
 
 // 品牌映射表（完整品牌名 → URL英文标识）
-const brandMapping = {
-  '豐田 TOYOTA': 'toyota',
-  '平治 MERCEDES-BENZ': 'mercedes-benz',
-  '本田 HONDA': 'honda',
-  '寶馬 BMW': 'bmw',
-  '保時捷 PORSCHE': 'porsche',
-  '奧迪 AUDI': 'audi',
-  '日產 NISSAN': 'nissan',
-  '特斯拉 TESLA': 'tesla',
-  '凌志 LEXUS': 'lexus',
-  '五十鈴 ISUZU': 'isuzu',
-  '福士 VOLKSWAGEN': 'volkswagen',
-  '越野路華 LAND ROVER': 'land-rover',
-  '鈴木 SUZUKI': 'suzuki',
-  '富士 SUBARU': 'subaru',
-  '萬事得 MAZDA': 'mazda',
-  '三菱 MITSUBISHI': 'mitsubishi',
-  '起亞 KIA': 'kia',
-  '法拉利 FERRARI': 'ferrari',
-  '迷你 MINI': 'mini',
-  '現代 HYUNDAI': 'hyundai',
-  '福特 FORD': 'ford',
-  '賓利 BENTLEY': 'bentley',
-  '富豪 VOLVO': 'volvo',
-  '日野 HINO': 'hino',
-  '林寶堅尼 LAMBORGHINI': 'lamborghini',
-  '瑪莎拉蒂 MASERATI': 'maserati',
-  '勞斯萊斯 ROLLS ROYCE': 'rolls-royce',
-  '麥拿倫 MCLAREN': 'mclaren',
-  '積架 JAGUAR': 'jaguar',
-  '標緻 PEUGEOT': 'peugeot',
-  '比亞迪 BYD': 'byd',
-  '阿士頓馬田 ASTON MARTIN': 'aston-martin',
-  '蓮花 LOTUS': 'lotus',
-  '大發 DAIHATSU': 'daihatsu',
-  '愛快 ALFAROMEO': 'alfaromeo',
-  '雷諾 RENAULT': 'renault',
-  '東風 DONGFENG': 'dongfeng',
-  '路華 ROVER': 'rover',
-  '先進 CITROEN': 'citroen',
-  '雙龍 SSANGYONG': 'ssangyong',
-  '快意 FIAT': 'fiat',
-  '福田 FOTON': 'foton',
-  '江淮 JAC': 'jac',
-  '大實力 UD': 'ud',
-  '猛獅 MAN': 'man',
-  '中國重汽 SINOTRUK': 'sinotruk',
-  '歐寶 OPEL': 'opel',
-  '紳寶 SAAB': 'saab',
-  'MAXUS': 'maxus',
-  'SMART': 'smart',
-  'INFINITI': 'infiniti',
-  'JEEP': 'jeep',
-  'MG': 'mg',
-  'SCANIA': 'scania',
-  '任何 ANY': 'any'
-}
+// 导入统一的品牌配置
+import { brandMapping, brandsListWithCount } from '@/config/brands'
 
-// 品牌列表数据（用于前端渲染）
-const brandsList = [
-  { brand: "豐田 TOYOTA", count: 4389, label: "豐田 TOYOTA" },
-  { brand: "平治 MERCEDES-BENZ", count: 1864, label: "平治 MERCEDES-BENZ" },
-  { brand: "本田 HONDA", count: 1673, label: "本田 HONDA" },
-  { brand: "寶馬 BMW", count: 1412, label: "寶馬 BMW" },
-  { brand: "保時捷 PORSCHE", count: 770, label: "保時捷 PORSCHE" },
-  { brand: "奧迪 AUDI", count: 505, label: "奧迪 AUDI" },
-  { brand: "日產 NISSAN", count: 496, label: "日產 NISSAN" },
-  { brand: "特斯拉 TESLA", count: 465, label: "特斯拉 TESLA" },
-  { brand: "任何 ANY", count: 444, label: "任何 ANY" },
-  { brand: "凌志 LEXUS", count: 375, label: "凌志 LEXUS" },
-  { brand: "五十鈴 ISUZU", count: 372, label: "五十鈴 ISUZU" },
-  { brand: "福士 VOLKSWAGEN", count: 302, label: "福士 VOLKSWAGEN" },
-  { brand: "越野路華 LAND ROVER", count: 265, label: "越野路華 LAND ROVER" },
-  { brand: "鈴木 SUZUKI", count: 262, label: "鈴木 SUZUKI" },
-  { brand: "富士 SUBARU", count: 248, label: "富士 SUBARU" },
-  { brand: "萬事得 MAZDA", count: 232, label: "萬事得 MAZDA" },
-  { brand: "三菱 MITSUBISHI", count: 230, label: "三菱 MITSUBISHI" },
-  { brand: "起亞 KIA", count: 229, label: "起亞 KIA" },
-  { brand: "法拉利 FERRARI", count: 203, label: "法拉利 FERRARI" },
-  { brand: "迷你 MINI", count: 182, label: "迷你 MINI" },
-  { brand: "現代 HYUNDAI", count: 174, label: "現代 HYUNDAI" },
-  { brand: "福特 FORD", count: 131, label: "福特 FORD" },
-  { brand: "賓利 BENTLEY", count: 114, label: "賓利 BENTLEY" },
-  { brand: "富豪 VOLVO", count: 112, label: "富豪 VOLVO" },
-  { brand: "日野 HINO", count: 99, label: "日野 HINO" },
-  { brand: "林寶堅尼 LAMBORGHINI", count: 96, label: "林寶堅尼 LAMBORGHINI" },
-  { brand: "瑪莎拉蒂 MASERATI", count: 95, label: "瑪莎拉蒂 MASERATI" },
-  { brand: "勞斯萊斯 ROLLS ROYCE", count: 69, label: "勞斯萊斯 ROLLS ROYCE" },
-  { brand: "麥拿倫 MCLAREN", count: 69, label: "麥拿倫 MCLAREN" },
-  { brand: "積架 JAGUAR", count: 54, label: "積架 JAGUAR" },
-  { brand: "標緻 PEUGEOT", count: 48, label: "標緻 PEUGEOT" },
-  { brand: "比亞迪 BYD", count: 42, label: "比亞迪 BYD" },
-  { brand: "阿士頓馬田 ASTON MARTIN", count: 39, label: "阿士頓馬田 ASTON MARTIN" },
-  { brand: "MAXUS", count: 37, label: "MAXUS" },
-  { brand: "蓮花 LOTUS", count: 35, label: "蓮花 LOTUS" },
-  { brand: "SMART", count: 34, label: "SMART" },
-  { brand: "大發 DAIHATSU", count: 31, label: "大發 DAIHATSU" },
-  { brand: "愛快 ALFAROMEO", count: 31, label: "愛快 ALFAROMEO" },
-  { brand: "雷諾 RENAULT", count: 29, label: "雷諾 RENAULT" },
-  { brand: "INFINITI", count: 26, label: "INFINITI" },
-  { brand: "JEEP", count: 26, label: "JEEP" },
-  { brand: "東風 DONGFENG", count: 23, label: "東風 DONGFENG" },
-  { brand: "路華 ROVER", count: 20, label: "路華 ROVER" },
-  { brand: "先進 CITROEN", count: 19, label: "先進 CITROEN" },
-  { brand: "雙龍 SSANGYONG", count: 19, label: "雙龍 SSANGYONG" },
-  { brand: "MG", count: 17, label: "MG" },
-  { brand: "快意 FIAT", count: 17, label: "快意 FIAT" },
-  { brand: "SCANIA", count: 14, label: "SCANIA" },
-  { brand: "福田 FOTON", count: 8, label: "福田 FOTON" },
-  { brand: "江淮 JAC", count: 7, label: "江淮 JAC" },
-  { brand: "大實力 UD", count: 6, label: "大實力 UD" },
-  { brand: "猛獅 MAN", count: 5, label: "猛獅 MAN" },
-  { brand: "中國重汽 SINOTRUK", count: 3, label: "中國重汽 SINOTRUK" },
-  { brand: "歐寶 OPEL", count: 1, label: "歐寶 OPEL" },
-  { brand: "紳寶 SAAB", count: 1, label: "紳寶 SAAB" }
-]
+// 品牌列表数据（使用统一配置）
+const brandsList = brandsListWithCount
 
-// 反向映射函数（URL英文标识 → 完整品牌名）
-const getBrandFromUrl = (urlBrand) => {
-  // 查找对应的完整品牌名
-  for (const [key, value] of Object.entries(brandMapping)) {
-    if (value === urlBrand.toLowerCase()) {
-      return key
-    }
-  }
-  // 如果没找到，返回原值
-  return urlBrand
-}
-
-// 正向映射函数（完整品牌名 → URL英文标识）
-const getBrandParam = (fullBrandName) => {
-  return brandMapping[fullBrandName] || fullBrandName
+// 导入统一的工具函数
+import { getBrandFromUrl, getBrandParam } from '@/config/brands'
 }
 
 // 更新路由

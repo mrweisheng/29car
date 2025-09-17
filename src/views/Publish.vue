@@ -440,66 +440,11 @@ const formRules = {
   ]
 }
 
-// 品牌列表（與搜索页面保持一致）
-const brandsList = [
-  { label: "豐田 TOYOTA", value: "豐田 TOYOTA" },
-  { label: "平治 MERCEDES-BENZ", value: "平治 MERCEDES-BENZ" },
-  { label: "本田 HONDA", value: "本田 HONDA" },
-  { label: "寶馬 BMW", value: "寶馬 BMW" },
-  { label: "保時捷 PORSCHE", value: "保時捷 PORSCHE" },
-  { label: "奧迪 AUDI", value: "奧迪 AUDI" },
-  { label: "日產 NISSAN", value: "日產 NISSAN" },
-  { label: "特斯拉 TESLA", value: "特斯拉 TESLA" },
-  { label: "凌志 LEXUS", value: "凌志 LEXUS" },
-  { label: "五十鈴 ISUZU", value: "五十鈴 ISUZU" },
-  { label: "福士 VOLKSWAGEN", value: "福士 VOLKSWAGEN" },
-  { label: "越野路華 LAND ROVER", value: "越野路華 LAND ROVER" },
-  { label: "鈴木 SUZUKI", value: "鈴木 SUZUKI" },
-  { label: "富士 SUBARU", value: "富士 SUBARU" },
-  { label: "萬事得 MAZDA", value: "萬事得 MAZDA" },
-  { label: "三菱 MITSUBISHI", value: "三菱 MITSUBISHI" },
-  { label: "起亞 KIA", value: "起亞 KIA" },
-  { label: "法拉利 FERRARI", value: "法拉利 FERRARI" },
-  { label: "迷你 MINI", value: "迷你 MINI" },
-  { label: "現代 HYUNDAI", value: "現代 HYUNDAI" },
-  { label: "福特 FORD", value: "福特 FORD" },
-  { label: "賓利 BENTLEY", value: "賓利 BENTLEY" },
-  { label: "富豪 VOLVO", value: "富豪 VOLVO" },
-  { label: "日野 HINO", value: "日野 HINO" },
-  { label: "林寶堅尼 LAMBORGHINI", value: "林寶堅尼 LAMBORGHINI" },
-  { label: "瑪莎拉蒂 MASERATI", value: "瑪莎拉蒂 MASERATI" },
-  { label: "勞斯萊斯 ROLLS ROYCE", value: "勞斯萊斯 ROLLS ROYCE" },
-  { label: "麥拿倫 MCLAREN", value: "麥拿倫 MCLAREN" },
-  { label: "積架 JAGUAR", value: "積架 JAGUAR" },
-  { label: "標緻 PEUGEOT", value: "標緻 PEUGEOT" },
-  { label: "比亞迪 BYD", value: "比亞迪 BYD" },
-  { label: "阿士頓馬田 ASTON MARTIN", value: "阿士頓馬田 ASTON MARTIN" },
-  { label: "極品 ACURA", value: "極品 ACURA" },
-  { label: "MAXUS", value: "MAXUS" },
-  { label: "蓮花 LOTUS", value: "蓮花 LOTUS" },
-  { label: "SMART", value: "SMART" },
-  { label: "大發 DAIHATSU", value: "大發 DAIHATSU" },
-  { label: "愛快 ALFAROMEO", value: "愛快 ALFAROMEO" },
-  { label: "雷諾 RENAULT", value: "雷諾 RENAULT" },
-  { label: "INFINITI", value: "INFINITI" },
-  { label: "JEEP", value: "JEEP" },
-  { label: "東風 DONGFENG", value: "東風 DONGFENG" },
-  { label: "路華 ROVER", value: "路華 ROVER" },
-  { label: "先進 CITROEN", value: "先進 CITROEN" },
-  { label: "雙龍 SSANGYONG", value: "雙龍 SSANGYONG" },
-  { label: "MG", value: "MG" },
-  { label: "快意 FIAT", value: "快意 FIAT" },
-  { label: "SCANIA", value: "SCANIA" },
-  { label: "福田 FOTON", value: "福田 FOTON" },
-  { label: "江淮 JAC", value: "江淮 JAC" },
-  { label: "大實力 UD", value: "大實力 UD" },
-  { label: "猛獅 MAN", value: "猛獅 MAN" },
-  { label: "中國重汽 SINOTRUK", value: "中國重汽 SINOTRUK" },
-  { label: "歐寶 OPEL", value: "歐寶 OPEL" },
-  { label: "歐霸 IVECO", value: "歐霸 IVECO" },
-  { label: "紳寶 SAAB", value: "紳寶 SAAB" },
-  { label: "任何 ANY", value: "任何 ANY" }
-]
+// 导入统一的品牌配置
+import { brandsListSimple } from '@/config/brands'
+
+// 品牌列表（使用统一配置）
+const brandsList = brandsListSimple
 
 // 年份列表
 const yearsList = computed(() => {
