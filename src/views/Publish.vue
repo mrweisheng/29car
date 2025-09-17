@@ -440,7 +440,7 @@ const formRules = {
   ]
 }
 
-// 品牌列表（与搜索页面保持一致）
+// 品牌列表（與搜索页面保持一致）
 const brandsList = [
   { label: "豐田 TOYOTA", value: "豐田 TOYOTA" },
   { label: "平治 MERCEDES-BENZ", value: "平治 MERCEDES-BENZ" },
@@ -474,6 +474,7 @@ const brandsList = [
   { label: "標緻 PEUGEOT", value: "標緻 PEUGEOT" },
   { label: "比亞迪 BYD", value: "比亞迪 BYD" },
   { label: "阿士頓馬田 ASTON MARTIN", value: "阿士頓馬田 ASTON MARTIN" },
+  { label: "極品 ACURA", value: "極品 ACURA" },
   { label: "MAXUS", value: "MAXUS" },
   { label: "蓮花 LOTUS", value: "蓮花 LOTUS" },
   { label: "SMART", value: "SMART" },
@@ -495,7 +496,9 @@ const brandsList = [
   { label: "猛獅 MAN", value: "猛獅 MAN" },
   { label: "中國重汽 SINOTRUK", value: "中國重汽 SINOTRUK" },
   { label: "歐寶 OPEL", value: "歐寶 OPEL" },
-  { label: "紳寶 SAAB", value: "紳寶 SAAB" }
+  { label: "歐霸 IVECO", value: "歐霸 IVECO" },
+  { label: "紳寶 SAAB", value: "紳寶 SAAB" },
+  { label: "任何 ANY", value: "任何 ANY" }
 ]
 
 // 年份列表
